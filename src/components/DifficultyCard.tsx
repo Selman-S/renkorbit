@@ -10,7 +10,8 @@ export interface DifficultyMeta {
   badge: string;
 }
 
-export const DIFFICULTY_META: Record<ColorCount, DifficultyMeta> = {
+/** Legacy free-play cards — journey uses progressionMap instead */
+export const DIFFICULTY_META: Partial<Record<ColorCount, DifficultyMeta>> = {
   4: {
     colors: 4,
     emoji: '🪐',
