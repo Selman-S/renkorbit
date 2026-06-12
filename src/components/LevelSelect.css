@@ -135,6 +135,51 @@
   color: var(--accent-gold);
 }
 
+.level-select__continue {
+  position: relative;
+  flex-shrink: 0;
+  width: 100%;
+  max-width: 400px;
+  margin: 0 auto 8px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--btn-play);
+  color: #fff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+  box-shadow: var(--btn-play-shadow);
+  overflow: hidden;
+}
+
+.level-select__continue-glow {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.25) 50%,
+    transparent 60%
+  );
+  animation: play-shine 3s ease-in-out infinite;
+}
+
+.level-select__continue-text {
+  position: relative;
+  z-index: 1;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.level-select__continue:active {
+  transform: scale(0.98);
+}
+
 /* Mission cards — scroll if needed, hidden scrollbar */
 .level-select__scroll {
   flex: 1;

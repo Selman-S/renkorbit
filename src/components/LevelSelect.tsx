@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { getUnlockedCount, ACHIEVEMENTS } from '../game/achievements';
 import { loadCoins } from '../game/coins';
 import { loadTotalScore } from '../game/scoring';
 import {
   getCompletedCount,
   getCurrentStepIndex,
+  getJourneyStep,
   getStepProgress,
   isStepUnlocked,
   PROGRESSION_STEPS,
@@ -57,11 +58,13 @@ export function LevelSelect({
   onOpenShop,
   onOpenStatistics,
 }: LevelSelectProps) {
-  void journeyRefreshKey;
   void profileRefreshKey;
   void scoreRefreshKey;
 
   const [showInstall, setShowInstall] = useState(false);
+  const [showContinueCta, setShowContinueCta] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const currentStepRef = useRef<HTMLButtonElement>(null);
   const { canInstall, isIos, hasNativePrompt, promptInstall } = usePwaInstall();
 
   const coins = loadCoins();
@@ -69,6 +72,48 @@ export function LevelSelect({
   const badges = getUnlockedCount();
   const currentStep = getCurrentStepIndex();
   const completed = getCompletedCount();
+  const currentStepMeta = getJourneyStep(currentStep);
+  const currentProgress = getStepProgress(currentStep);
+  const hasActiveStep = !currentProgress.completed && isStepUnlocked(currentStep);
+  const continueLabel = completed === 0 ? 'Oyna' : 'Devam et';
+
+  // Show top CTA when the active step sits below the fold
+  useEffect(() => {
+    const scrollEl = scrollRef.current;
+    const stepEl = currentStepRef.current;
+
+    if (!hasActiveStep || !scrollEl || !stepEl) {
+      setShowContinueCta(false);
+      return;
+    }
+
+    const updateVisibility = () => {
+      const scrollRect = scrollEl.getBoundingClientRect();
+      const stepRect = stepEl.getBoundingClientRect();
+      const visibleTop = Math.max(scrollRect.top, stepRect.top);
+      const visibleBottom = Math.min(scrollRect.bottom, stepRect.bottom);
+      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
+      const ratio = visibleHeight / stepRect.height;
+      setShowContinueCta(ratio < 0.65);
+    };
+
+    updateVisibility();
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowContinueCta(!entry.isIntersecting || entry.intersectionRatio < 0.65),
+      { root: scrollEl, threshold: [0, 0.35, 0.65, 1] },
+    );
+
+    observer.observe(stepEl);
+    scrollEl.addEventListener('scroll', updateVisibility, { passive: true });
+    window.addEventListener('resize', updateVisibility);
+
+    return () => {
+      observer.disconnect();
+      scrollEl.removeEventListener('scroll', updateVisibility);
+      window.removeEventListener('resize', updateVisibility);
+    };
+  }, [currentStep, hasActiveStep, journeyRefreshKey]);
 
   return (
     <div className="level-select">
@@ -106,7 +151,20 @@ export function LevelSelect({
         </p>
       </header>
 
-      <div className="level-select__scroll">
+      {showContinueCta && hasActiveStep && currentStepMeta && (
+        <button
+          type="button"
+          className="level-select__continue"
+          onClick={() => onStartStep(currentStep)}
+        >
+          <span className="level-select__continue-glow" aria-hidden />
+          <span className="level-select__continue-text">
+            {continueLabel} · {currentStep}. {currentStepMeta.title}
+          </span>
+        </button>
+      )}
+
+      <div ref={scrollRef} className="level-select__scroll">
         <div className="level-select__scroll-inner">
           <p className="level-select__section-title">Galaksi yolu</p>
 
@@ -119,6 +177,7 @@ export function LevelSelect({
               return (
                 <li key={step.index} className="journey-path__item">
                   <button
+                    ref={isCurrent ? currentStepRef : undefined}
                     type="button"
                     className={[
                       'journey-node',
