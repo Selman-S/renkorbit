@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:layout": "node scripts/test-layout.mjs",
-    "generate:icons": "sh scripts/generate-pwa-icons.sh"
+    "generate:icons": "sh scripts/generate-pwa-icons.sh",
+    "reset:leaderboard": "node scripts/reset-leaderboard.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1",

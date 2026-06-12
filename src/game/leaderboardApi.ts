@@ -25,6 +25,7 @@ export async function fetchLeaderboard(): Promise<LeaderboardEntry[]> {
   const { data, error } = await supabase
     .from(TABLE)
     .select('player_id, username, total_score')
+    .gt('total_score', 0)
     .order('total_score', { ascending: false })
     .limit(FETCH_LIMIT);
 

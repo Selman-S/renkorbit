@@ -25,3 +25,8 @@ create policy "leaderboard_public_update"
   on public.leaderboard for update
   using (true)
   with check (true);
+
+-- Optional: allows scripts/reset-leaderboard.mjs to wipe rows via anon key
+create policy "leaderboard_public_delete"
+  on public.leaderboard for delete
+  using (true);

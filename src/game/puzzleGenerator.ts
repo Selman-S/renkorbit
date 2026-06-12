@@ -1,5 +1,5 @@
 import type { LevelConfig } from './levelConfig';
-import { checkWin, countMixedColumns } from './gameLogic';
+import { canMove, checkWin, countMixedColumns, moveBalls } from './gameLogic';
 import type { Column } from './types';
 
 export function createRng(seed: number): () => number {
@@ -35,6 +35,15 @@ export function hasStandardHeights(columns: Column[], config: LevelConfig): bool
 
 function minMixedColumns(config: LevelConfig): number {
   return Math.max(2, Math.floor(config.colors / 2));
+}
+
+/** True when a tube is already one color (partially or fully "done") */
+export function hasUniformTube(columns: Column[]): boolean {
+  return columns.some((col) => {
+    if (col.length < 2) return false;
+    const first = col[0];
+    return col.every((ball) => ball === first);
+  });
 }
 
 /**
@@ -90,9 +99,28 @@ export function createShuffledDeal(config: LevelConfig, seed: number): Column[] 
   return columns;
 }
 
-function isPlayableHard(columns: Column[], config: LevelConfig): boolean {
+/** Apply random legal moves to break row-order starts into a mixed board */
+export function scrambleFromRows(config: LevelConfig, seed: number): Column[] {
+  let columns = createRowLayout(config, seed);
+  const rng = createRng(seed ^ 0x9e3779b9);
+  const moveCount = config.colors * config.capacity * 6;
+
+  for (let i = 0; i < moveCount; i++) {
+    const from = Math.floor(rng() * config.columns);
+    const to = Math.floor(rng() * config.columns);
+
+    if (canMove(columns, from, to, config.capacity)) {
+      columns = moveBalls(columns, from, to, config.capacity);
+    }
+  }
+
+  return columns;
+}
+
+function isPlayableMixed(columns: Column[], config: LevelConfig): boolean {
   if (checkWin(columns, config.capacity)) return false;
   if (!hasStandardHeights(columns, config)) return false;
+  if (hasUniformTube(columns)) return false;
   return countMixedColumns(columns) >= minMixedColumns(config);
 }
 
@@ -104,16 +132,28 @@ export function generatePuzzle(
     return { columns: createRowLayout(config, seed), seed };
   }
 
-  const maxAttempts = 30;
+  const maxAttempts = 48;
+  const builders = [createShuffledDeal, scrambleFromRows];
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const trySeed = seed + attempt;
-    const columns = createShuffledDeal(config, trySeed);
+    const build = builders[attempt % builders.length];
+    const columns = build(config, trySeed);
 
-    if (isPlayableHard(columns, config)) {
+    if (isPlayableMixed(columns, config)) {
       return { columns, seed: trySeed };
     }
   }
 
-  return { columns: createShuffledDeal(config, seed), seed };
+  // Last resort — keep scrambling until valid
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const trySeed = seed + maxAttempts + attempt;
+    const columns = scrambleFromRows(config, trySeed);
+
+    if (isPlayableMixed(columns, config)) {
+      return { columns, seed: trySeed };
+    }
+  }
+
+  return { columns: scrambleFromRows(config, seed), seed };
 }
