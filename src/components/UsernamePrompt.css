@@ -1,0 +1,99 @@
+.username-prompt {
+  flex: 1;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+
+.username-prompt__card {
+  position: relative;
+  width: 100%;
+  max-width: 340px;
+  padding: 28px 22px 24px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(13, 8, 32, 0.92);
+  text-align: center;
+  overflow: hidden;
+}
+
+.username-prompt__glow {
+  position: absolute;
+  inset: -40% -20% auto;
+  height: 60%;
+  background: radial-gradient(circle, rgba(124, 77, 255, 0.35), transparent 70%);
+  pointer-events: none;
+}
+
+.username-prompt__emoji {
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.username-prompt__title {
+  margin: 8px 0 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  background: var(--title-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.username-prompt__sub {
+  margin: 8px 0 20px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.username-prompt__form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.username-prompt__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.username-prompt__input:focus {
+  outline: none;
+  border-color: rgba(76, 201, 240, 0.6);
+  box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
+}
+
+.username-prompt__error {
+  margin: 0;
+  font-size: 0.72rem;
+  color: #ff8a8a;
+}
+
+.username-prompt__btn {
+  min-height: 48px;
+  border: none;
+  border-radius: 14px;
+  background: var(--btn-play);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: var(--btn-play-shadow);
+}
+
+.username-prompt__btn:active {
+  transform: scale(0.98);
+}

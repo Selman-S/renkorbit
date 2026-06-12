@@ -1,0 +1,101 @@
+.shop__tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  padding: 0 14px 8px;
+}
+
+.shop__tab {
+  padding: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.22);
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.shop__tab--active {
+  border-color: rgba(76, 201, 240, 0.4);
+  background: rgba(76, 201, 240, 0.12);
+  color: var(--accent-cyan);
+}
+
+.shop__toast {
+  margin: 0;
+  padding: 0 14px 8px;
+  font-size: 0.72rem;
+  color: var(--accent-gold);
+  text-align: center;
+}
+
+.shop__list {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px 16px;
+}
+
+.shop__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.22);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 6px;
+}
+
+.shop__row--equipped {
+  border-color: rgba(255, 229, 102, 0.35);
+  background: rgba(255, 229, 102, 0.06);
+}
+
+.shop__emoji {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.shop__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.shop__name {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.shop__desc {
+  display: block;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.shop__btn {
+  flex-shrink: 0;
+  min-width: 72px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.shop__btn--buy {
+  border-color: rgba(255, 229, 102, 0.4);
+  color: var(--accent-gold);
+}
+
+.shop__btn--equipped {
+  opacity: 0.55;
+  cursor: default;
+}

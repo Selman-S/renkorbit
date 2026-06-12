@@ -1,0 +1,27 @@
+/* Cosmic purple theme */
+:root {
+  --bg-image: url('/backgrounds/cosmic.jpg');
+
+  --space-top: #2d1b69;
+  --space-mid: #1a1035;
+  --space-bottom: #0d0820;
+
+  --accent-cyan: #4cc9f0;
+  --accent-magenta: #e040fb;
+  --accent-violet: #7c4dff;
+  --accent-pink: #ff6bcb;
+  --accent-gold: #ffe566;
+
+  --glass-bg: rgba(35, 18, 70, 0.55);
+  --glass-border: rgba(255, 255, 255, 0.22);
+  --glass-glow: rgba(124, 77, 255, 0.35);
+
+  --text-primary: #ffffff;
+  --text-muted: rgba(255, 255, 255, 0.62);
+  --text-dim: rgba(255, 255, 255, 0.42);
+
+  --btn-play: linear-gradient(135deg, #7c4dff 0%, #e040fb 50%, #4cc9f0 100%);
+  --btn-play-shadow: 0 8px 28px rgba(124, 77, 255, 0.45);
+
+  --title-gradient: linear-gradient(135deg, #ffe566 0%, #ff6bcb 40%, #4cc9f0 100%);
+}

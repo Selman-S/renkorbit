@@ -1,0 +1,49 @@
+.profile__grid {
+  list-style: none;
+  margin: 0;
+  padding: 0 12px 16px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.profile__badge {
+  padding: 12px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.22);
+  text-align: center;
+  min-height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.profile__badge--earned {
+  border-color: rgba(255, 229, 102, 0.35);
+  background: rgba(255, 229, 102, 0.08);
+}
+
+.profile__badge--locked {
+  opacity: 0.45;
+  filter: grayscale(0.85);
+}
+
+.profile__emoji {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.profile__name {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.profile__desc {
+  font-size: 0.58rem;
+  color: var(--text-dim);
+  line-height: 1.3;
+}

@@ -1,0 +1,102 @@
+.tube {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Open mouth at the top — player reaches in from above */
+.tube__rim {
+  width: 100%;
+  height: 6px;
+  border-radius: 8px 8px 0 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0.12));
+  box-shadow: 0 -1px 4px rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.tube__glass {
+  width: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0.14) 30%,
+    rgba(255, 255, 255, 0.06) 100%
+  );
+  border-left: 2px solid rgba(255, 255, 255, 0.2);
+  border-right: 2px solid rgba(255, 255, 255, 0.2);
+  border-bottom: none;
+  box-shadow:
+    inset 0 0 20px rgba(0, 0, 0, 0.25),
+    inset 2px 0 8px rgba(255, 255, 255, 0.08),
+    inset -2px 0 8px rgba(0, 0, 0, 0.12);
+  overflow: visible;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/*
+ * column-reverse + fixed slots: slot 0 at bottom, empties only on top.
+ */
+.tube__slots {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 0 4px 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.tube__slot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tube__slot--empty {
+  pointer-events: none;
+  opacity: 0;
+}
+
+.tube__ball-wrap--top {
+  cursor: grab;
+  touch-action: none;
+  position: relative;
+  z-index: 2;
+  /* Larger tap area on small balls */
+  padding: 6px;
+  margin: -6px;
+}
+
+.tube__ball-wrap--top:active {
+  cursor: grabbing;
+}
+
+/* Sealed bottom of the pipe */
+.tube__base {
+  width: 100%;
+  height: 10px;
+  border-radius: 0 0 10px 10px;
+  background: linear-gradient(180deg, rgba(124, 77, 255, 0.5), rgba(45, 27, 105, 0.9));
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.45);
+  flex-shrink: 0;
+}
+
+.tube--valid .tube__glass {
+  border-left-color: rgba(76, 201, 240, 0.8);
+  border-right-color: rgba(76, 201, 240, 0.8);
+  box-shadow:
+    0 0 18px rgba(76, 201, 240, 0.4),
+    inset 0 0 20px rgba(0, 0, 0, 0.25);
+}
+
+.tube--invalid .tube__glass {
+  border-left-color: rgba(255, 80, 80, 0.8);
+  border-right-color: rgba(255, 80, 80, 0.8);
+}
+

@@ -1,0 +1,51 @@
+.star-row {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.star-row__star {
+  color: rgba(255, 255, 255, 0.2);
+  line-height: 1;
+  transition: color 0.2s, transform 0.2s;
+}
+
+.star-row__star--filled {
+  color: #ffd166;
+  text-shadow: 0 0 8px rgba(255, 209, 102, 0.5);
+}
+
+.star-row--sm .star-row__star {
+  font-size: 0.95rem;
+}
+
+.star-row--md .star-row__star {
+  font-size: 1.35rem;
+}
+
+.star-row--lg .star-row__star {
+  font-size: 1.85rem;
+}
+
+.star-row--lg .star-row__star--filled {
+  animation: star-pop 0.4s ease backwards;
+}
+
+.star-row--lg .star-row__star--filled:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.star-row--lg .star-row__star--filled:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+@keyframes star-pop {
+  from {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
