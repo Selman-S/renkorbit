@@ -8,23 +8,31 @@ export interface ColorDef {
   shadow: string;
 }
 
-// Full 12-color palette; each level uses the first N colors
-// Vibrant candy/neon palette — pops on dark cosmic background
+// 12 hues ~30° apart — high saturation, alternating lightness for neighbors
 export const COLOR_PALETTE: ColorDef[] = [
-  { id: 0, name: 'Mars', hex: '#ff4d6d', highlight: '#ff8fa3', shadow: '#c9184a' },
-  { id: 1, name: 'Güneş', hex: '#ff9e00', highlight: '#ffd166', shadow: '#e85d04' },
-  { id: 2, name: 'Altın', hex: '#ffe566', highlight: '#fff3a3', shadow: '#f4a261' },
-  { id: 3, name: 'Neon', hex: '#06d6a0', highlight: '#7bffb8', shadow: '#059669' },
-  { id: 4, name: 'Buz', hex: '#4cc9f0', highlight: '#a8ecff', shadow: '#0096c7' },
-  { id: 5, name: 'Okyanus', hex: '#4895ef', highlight: '#90b8ff', shadow: '#3a56c4' },
-  { id: 6, name: 'Galaksi', hex: '#9d4edd', highlight: '#e0aaff', shadow: '#6a2c9e' },
-  { id: 7, name: 'Şeker', hex: '#ff6bcb', highlight: '#ffb3e0', shadow: '#d63384' },
-  { id: 8, name: 'Turkuaz', hex: '#2ec4b6', highlight: '#8ef0e4', shadow: '#1a9e8f' },
-  { id: 9, name: 'Lavanta', hex: '#b8a9ff', highlight: '#e2dbff', shadow: '#7c6fd4' },
-  { id: 10, name: 'Ay', hex: '#f8f9fa', highlight: '#ffffff', shadow: '#ced4da' },
-  { id: 11, name: 'Gece', hex: '#5c4d7d', highlight: '#9d8ec4', shadow: '#3d2f5c' },
+  { id: 0, name: 'Kırmızı', hex: '#FF2D55', highlight: '#FF8FA8', shadow: '#C4002E' },
+  { id: 1, name: 'Turuncu', hex: '#FF7B00', highlight: '#FFB366', shadow: '#CC5500' },
+  { id: 2, name: 'Amber', hex: '#FFBF00', highlight: '#FFE066', shadow: '#C99700' },
+  { id: 3, name: 'Limon', hex: '#A8E600', highlight: '#D4FF66', shadow: '#6F9900' },
+  { id: 4, name: 'Yeşil', hex: '#00D166', highlight: '#66FFAA', shadow: '#00994A' },
+  { id: 5, name: 'Turkuaz', hex: '#00C8F0', highlight: '#80E8FF', shadow: '#0090B8' },
+  { id: 6, name: 'Mavi', hex: '#2B7FFF', highlight: '#80B3FF', shadow: '#0050CC' },
+  { id: 7, name: 'İndigo', hex: '#5E4BFF', highlight: '#A899FF', shadow: '#3520CC' },
+  { id: 8, name: 'Mor', hex: '#B84DFF', highlight: '#D999FF', shadow: '#7A1ACC' },
+  { id: 9, name: 'Pembe', hex: '#FF3DAD', highlight: '#FF99D6', shadow: '#CC0077' },
+  { id: 10, name: 'Gümüş', hex: '#E8E8F2', highlight: '#FFFFFF', shadow: '#9898B0' },
+  { id: 11, name: 'Kahve', hex: '#C67C4E', highlight: '#E8B08A', shadow: '#8B4A22' },
 ];
 
-export function getColorDef(id: ColorId): ColorDef {
-  return COLOR_PALETTE[id] ?? COLOR_PALETTE[0];
+/** Spread palette picks across the wheel when fewer than 12 colors are active */
+export function resolvePaletteIndex(colorId: ColorId, colorCount: number): number {
+  const max = COLOR_PALETTE.length - 1;
+  if (colorCount <= 1) return 0;
+  if (colorCount >= COLOR_PALETTE.length) return colorId;
+  return Math.round((colorId * max) / (colorCount - 1));
+}
+
+export function getColorDef(id: ColorId, colorCount = 12): ColorDef {
+  const idx = resolvePaletteIndex(id, colorCount);
+  return COLOR_PALETTE[idx] ?? COLOR_PALETTE[0];
 }

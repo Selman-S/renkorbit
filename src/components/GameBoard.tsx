@@ -238,6 +238,7 @@ export function GameBoard({
       {floating && (
         <DragFloatingBall
           colorId={floating.colorId}
+          colorCount={config.colors}
           size={ballSize}
           ballSkin={ballSkin}
           x={floating.x}

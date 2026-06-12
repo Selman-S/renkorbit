@@ -88,13 +88,18 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
               >
                 {colorId !== null &&
                   (showGhost ? (
-                    <Ball colorId={colorId} size={ballSize} ghost />
+                    <Ball colorId={colorId} colorCount={config.colors} size={ballSize} ghost />
                   ) : (
                     <div
                       ref={isTop ? topBallRef : undefined}
                       className="tube__ball-wrap"
                     >
-                      <Ball colorId={colorId} size={ballSize} skin={ballSkin} />
+                      <Ball
+                        colorId={colorId}
+                        colorCount={config.colors}
+                        size={ballSize}
+                        skin={ballSkin}
+                      />
                     </div>
                   ))}
               </div>

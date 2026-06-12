@@ -5,6 +5,7 @@ import './Ball.css';
 
 interface BallProps {
   colorId: ColorId;
+  colorCount?: number;
   size?: number;
   ghost?: boolean;
   skin?: BallSkinId;
@@ -43,8 +44,15 @@ function getBallStyle(color: ReturnType<typeof getColorDef>, skin: BallSkinId, g
   }
 }
 
-export function Ball({ colorId, size, ghost = false, skin = 'classic', className = '' }: BallProps) {
-  const color = getColorDef(colorId);
+export function Ball({
+  colorId,
+  colorCount = 12,
+  size,
+  ghost = false,
+  skin = 'classic',
+  className = '',
+}: BallProps) {
+  const color = getColorDef(colorId, colorCount);
   const style = getBallStyle(color, skin, ghost);
 
   return (

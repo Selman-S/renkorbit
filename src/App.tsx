@@ -333,6 +333,8 @@ function App() {
         <LevelSelect
           onStartStep={startJourneyStep}
           onOpenLeaderboard={() => setShowScoreboard(true)}
+          showScoreboard={showScoreboard}
+          onCloseScoreboard={() => setShowScoreboard(false)}
           scoreRefreshKey={scoreRefreshKey}
           journeyRefreshKey={journeyRefreshKey}
           profileRefreshKey={profileRefreshKey}
@@ -407,11 +409,13 @@ function App() {
         </>
       )}
       <ShareToast message={shareToast} />
-      <Scoreboard
-        open={showScoreboard}
-        onClose={() => setShowScoreboard(false)}
-        refreshKey={scoreRefreshKey}
-      />
+      {screen !== 'menu' && (
+        <Scoreboard
+          open={showScoreboard}
+          onClose={() => setShowScoreboard(false)}
+          refreshKey={scoreRefreshKey}
+        />
+      )}
     </div>
   );
 }

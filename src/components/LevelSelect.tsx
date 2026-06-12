@@ -12,6 +12,7 @@ import {
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { InstallAppModal } from './InstallAppModal';
 import { Profile } from './Profile';
+import { Scoreboard } from './Scoreboard';
 import { Shop } from './Shop';
 import { Statistics } from './Statistics';
 import { StarRow } from './StarRow';
@@ -20,6 +21,8 @@ import './LevelSelect.css';
 interface LevelSelectProps {
   onStartStep: (stepIndex: number) => void;
   onOpenLeaderboard?: () => void;
+  showScoreboard?: boolean;
+  onCloseScoreboard?: () => void;
   journeyRefreshKey?: number;
   profileRefreshKey?: number;
   scoreRefreshKey?: number;
@@ -37,6 +40,8 @@ interface LevelSelectProps {
 
 export function LevelSelect({
   onStartStep,
+  showScoreboard = false,
+  onCloseScoreboard,
   onOpenLeaderboard,
   journeyRefreshKey = 0,
   profileRefreshKey = 0,
@@ -196,6 +201,15 @@ export function LevelSelect({
       )}
       {onCloseStatistics && (
         <Statistics open={showStatistics} onClose={onCloseStatistics} />
+      )}
+      {onCloseScoreboard && (
+        <Scoreboard
+          open={showScoreboard}
+          onClose={onCloseScoreboard}
+          refreshKey={scoreRefreshKey}
+          overlay="transparent"
+          anchor="contained"
+        />
       )}
 
       <InstallAppModal

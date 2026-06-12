@@ -11,9 +11,17 @@ interface ScoreboardProps {
   open: boolean;
   onClose: () => void;
   refreshKey?: number;
+  overlay?: 'dimmed' | 'transparent';
+  anchor?: 'fixed' | 'contained';
 }
 
-export function Scoreboard({ open, onClose, refreshKey = 0 }: ScoreboardProps) {
+export function Scoreboard({
+  open,
+  onClose,
+  refreshKey = 0,
+  overlay = 'dimmed',
+  anchor = 'fixed',
+}: ScoreboardProps) {
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [offline, setOffline] = useState(!isOnlineLeaderboard());
@@ -49,7 +57,15 @@ export function Scoreboard({ open, onClose, refreshKey = 0 }: ScoreboardProps) {
   }, [open, refreshKey]);
 
   return (
-    <ModalCard open={open} onClose={onClose} titleId="scoreboard-title" title="Liderlik Tablosu">
+    <ModalCard
+      open={open}
+      onClose={onClose}
+      titleId="scoreboard-title"
+      title="Liderlik Tablosu"
+      className="modal-card--tall"
+      overlay={overlay}
+      anchor={anchor}
+    >
       {offline && (
         <p className="scoreboard__hint">Çevrimdışı mod — yalnızca senin skorun gösteriliyor.</p>
       )}

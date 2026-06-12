@@ -6,6 +6,7 @@ import type { ColorId } from '../game/types';
 
 interface DragFloatingBallProps {
   colorId: ColorId;
+  colorCount?: number;
   size: number;
   ballSkin?: BallSkinId;
   x: number;
@@ -19,6 +20,7 @@ interface DragFloatingBallProps {
 // Floating ball — follows finger; drop uses tween animation
 export function DragFloatingBall({
   colorId,
+  colorCount = 12,
   size,
   ballSkin = 'classic',
   x,
@@ -46,7 +48,13 @@ export function DragFloatingBall({
         if (dropping) onDropComplete?.();
       }}
     >
-      <Ball colorId={colorId} size={size} skin={ballSkin} className="ball--floating" />
+      <Ball
+        colorId={colorId}
+        colorCount={colorCount}
+        size={size}
+        skin={ballSkin}
+        className="ball--floating"
+      />
     </motion.div>,
     document.body,
   );

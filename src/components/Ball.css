@@ -3,6 +3,9 @@
   flex-shrink: 0;
   position: relative;
   touch-action: none;
+  /* Thin rim helps tell adjacent balls apart on dense boards */
+  outline: 1.5px solid rgba(255, 255, 255, 0.28);
+  outline-offset: -1px;
 }
 
 .ball::after {
