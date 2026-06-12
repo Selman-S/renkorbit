@@ -42,6 +42,7 @@ export function useGame(initialSettings: GameSettings = DEFAULT_SETTINGS) {
   );
 
   const clearComboPops = useCallback(() => dispatch({ type: 'CLEAR_COMBO_POPS' }), []);
+  const clearComboBreaks = useCallback(() => dispatch({ type: 'CLEAR_COMBO_BREAKS' }), []);
 
   return {
     state,
@@ -51,5 +52,6 @@ export function useGame(initialSettings: GameSettings = DEFAULT_SETTINGS) {
     newGame,
     setGame,
     clearComboPops,
+    clearComboBreaks,
   };
 }

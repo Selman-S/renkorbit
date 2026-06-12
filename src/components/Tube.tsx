@@ -46,14 +46,14 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
   const hasBalls = column.length > 0;
   const canPick = hasBalls && !disabled;
 
-  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+  const handleTopPointerDown = (e: PointerEvent<HTMLDivElement>, colorId: ColorId) => {
     if (!canPick) return;
     e.preventDefault();
+    e.stopPropagation();
 
-    const topColorId = column[column.length - 1];
     const anchor = topBallRef.current ?? (e.currentTarget as HTMLElement);
     e.currentTarget.setPointerCapture(e.pointerId);
-    onTubePointerDown(index, topColorId, e, anchor);
+    onTubePointerDown(index, colorId, e, anchor);
   };
 
   return (
@@ -61,7 +61,6 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
       ref={ref}
       className={[
         'tube',
-        canPick && 'tube--pickable',
         dropTarget && 'tube--valid',
         invalid && 'tube--invalid',
       ]
@@ -70,7 +69,6 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
       animate={invalid ? { x: [0, -6, 6, -6, 6, 0] } : { x: 0 }}
       transition={{ duration: 0.4 }}
       data-tube-index={index}
-      onPointerDown={canPick ? handlePointerDown : undefined}
     >
       <div className="tube__rim" aria-hidden />
       <div className="tube__glass" style={{ minHeight: slotsHeight }}>
@@ -92,7 +90,12 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
                   ) : (
                     <div
                       ref={isTop ? topBallRef : undefined}
-                      className="tube__ball-wrap"
+                      className={`tube__ball-wrap ${isTop ? 'tube__ball-wrap--top' : ''}`}
+                      onPointerDown={
+                        isTop && canPick
+                          ? (e) => handleTopPointerDown(e, colorId)
+                          : undefined
+                      }
                     >
                       <Ball
                         colorId={colorId}

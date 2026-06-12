@@ -26,12 +26,18 @@
   font-weight: 900;
   line-height: 1;
   letter-spacing: -0.04em;
-  color: #fff6c8;
+  color: var(--combo-text, #fff6c8);
   text-shadow:
-    0 0 18px rgba(255, 229, 102, 0.95),
-    0 0 40px rgba(255, 180, 50, 0.65),
-    0 3px 0 rgba(180, 120, 0, 0.45);
+    0 0 18px rgba(var(--combo-glow, 255, 229, 102), 0.95),
+    0 0 40px rgba(var(--combo-glow, 255, 229, 102), 0.55),
+    0 3px 0 rgba(0, 0, 0, 0.35);
   font-variant-numeric: tabular-nums;
+}
+
+.combo-burst__text--break {
+  text-decoration: line-through;
+  text-decoration-thickness: 4px;
+  text-decoration-color: rgba(var(--combo-glow, 255, 92, 92), 0.9);
 }
 
 .combo-burst__label {
@@ -41,8 +47,13 @@
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.22em;
-  color: var(--accent-gold);
-  text-shadow: 0 0 12px rgba(255, 229, 102, 0.6);
+  color: var(--combo-label, var(--accent-gold));
+  text-shadow: 0 0 12px rgba(var(--combo-glow, 255, 229, 102), 0.6);
+}
+
+.combo-burst__label--break {
+  letter-spacing: 0.16em;
+  font-size: 0.82rem;
 }
 
 .combo-burst__ring {
@@ -53,13 +64,17 @@
   height: 72px;
   margin: -36px 0 0 -36px;
   border-radius: 50%;
-  border: 3px solid rgba(255, 229, 102, 0.85);
+  border: 3px solid var(--combo-ring, rgba(255, 229, 102, 0.85));
   box-shadow:
-    0 0 20px rgba(255, 229, 102, 0.55),
-    inset 0 0 16px rgba(255, 229, 102, 0.25);
+    0 0 20px rgba(var(--combo-glow, 255, 229, 102), 0.55),
+    inset 0 0 16px rgba(var(--combo-glow, 255, 229, 102), 0.25);
 }
 
 .combo-burst__ring--inner {
   border-width: 2px;
-  border-color: rgba(255, 255, 255, 0.75);
+  border-color: var(--combo-ring-inner, rgba(255, 255, 255, 0.75));
+}
+
+.combo-burst--break .combo-burst__ring {
+  border-width: 4px;
 }

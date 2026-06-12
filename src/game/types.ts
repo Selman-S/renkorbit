@@ -32,6 +32,7 @@ export interface GameState {
   maxCombo: number;
   tubeScores: TubeScores;
   comboPops: number[];
+  comboBreaks: number[];
   elapsedSec: number;
   timeLimitSec: number | null;
   status: GameStatus;
@@ -52,4 +53,5 @@ export type GameAction =
       journeyStep?: number;
     }
   | { type: 'CLEAR_SHAKE' }
-  | { type: 'CLEAR_COMBO_POPS' };
+  | { type: 'CLEAR_COMBO_POPS' }
+  | { type: 'CLEAR_COMBO_BREAKS' };

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { isSoundMuted, setSoundMuted } from '../game/storage';
 
-export type SoundEvent = 'pick' | 'drop' | 'invalid' | 'win' | 'undo' | 'combo';
+export type SoundEvent = 'pick' | 'drop' | 'invalid' | 'win' | 'undo' | 'combo' | 'comboBreak';
 
 let sharedCtx: AudioContext | null = null;
 
@@ -66,6 +66,12 @@ function playEventSound(event: SoundEvent, comboLevel = 1) {
       playTone(base, 0.09, 'sine', 0.1);
       playTone(base * 1.28, 0.11, 'triangle', 0.08, 0.05);
       playTone(base * 1.55, 0.14, 'sine', 0.05, 0.1);
+      break;
+    }
+    case 'comboBreak': {
+      playTone(320, 0.12, 'sawtooth', 0.08);
+      playTone(220, 0.14, 'triangle', 0.07, 0.08);
+      playTone(140, 0.18, 'sine', 0.06, 0.16);
       break;
     }
   }

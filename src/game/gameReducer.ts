@@ -58,6 +58,7 @@ function buildInitialState(
     maxCombo: 0,
     tubeScores: {},
     comboPops: [],
+    comboBreaks: [],
     elapsedSec: 0,
     timeLimitSec,
     status: 'playing',
@@ -105,6 +106,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'CLEAR_COMBO_POPS':
       return { ...state, comboPops: [] };
 
+    case 'CLEAR_COMBO_BREAKS':
+      return { ...state, comboBreaks: [] };
+
     case 'MOVE': {
       if (state.status !== 'playing') return state;
 
@@ -143,6 +147,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         maxCombo: comboUpdate.maxCombo,
         tubeScores: comboUpdate.tubeScores,
         comboPops: comboUpdate.comboPops,
+        comboBreaks: comboUpdate.comboBreaks,
         history: [...state.history, snapshot],
         status: checkWin(columns, state.config.capacity) ? 'won' : 'playing',
         invalidShake: null,
@@ -161,6 +166,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         maxCombo: snapshot.maxCombo,
         tubeScores: { ...snapshot.tubeScores },
         comboPops: [],
+        comboBreaks: [],
         history,
         moves: Math.max(0, state.moves - 1),
         status: 'playing',

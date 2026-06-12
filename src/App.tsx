@@ -72,7 +72,7 @@ function App() {
   const [comboBursts, setComboBursts] = useState<ComboBurstItem[]>([]);
   const [shareToast, setShareToast] = useState<string | null>(null);
 
-  const { state, moveBalls, canDrop, undo, newGame, setGame, clearComboPops } =
+  const { state, moveBalls, canDrop, undo, newGame, setGame, clearComboPops, clearComboBreaks } =
     useGame(activeSettings);
   const { play, muted, toggleMute, unlock } = useSound();
 
@@ -192,11 +192,27 @@ function App() {
       const timer = window.setTimeout(() => {
         play('combo', combo);
         const id = burstIdRef.current++;
-        setComboBursts((prev) => [...prev, { id, combo }]);
+        setComboBursts((prev) => [...prev, { id, kind: 'gain', combo }]);
       }, index * 180);
       comboPopTimers.current.push(timer);
     });
   }, [state.comboPops, clearComboPops, play]);
+
+  useEffect(() => {
+    if (state.comboBreaks.length === 0) return;
+
+    const breaks = [...state.comboBreaks];
+    clearComboBreaks();
+
+    breaks.forEach((combo, index) => {
+      const timer = window.setTimeout(() => {
+        play('comboBreak');
+        const id = burstIdRef.current++;
+        setComboBursts((prev) => [...prev, { id, kind: 'break', combo }]);
+      }, index * 120);
+      comboPopTimers.current.push(timer);
+    });
+  }, [state.comboBreaks, clearComboBreaks, play]);
 
   useEffect(() => {
     return () => {
