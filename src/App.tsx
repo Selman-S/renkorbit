@@ -358,7 +358,7 @@ function App() {
           onOpenStatistics={() => setShowStatistics(true)}
         />
       ) : (
-        <>
+        <div className="app__game">
           <HUD
             state={state}
             totalScore={totalScore}
@@ -406,16 +406,16 @@ function App() {
             onToggleSound={toggleMute}
             onShare={handleSharePuzzle}
           />
-        </>
+          <Scoreboard
+            open={showScoreboard}
+            onClose={() => setShowScoreboard(false)}
+            refreshKey={scoreRefreshKey}
+            overlay="transparent"
+            anchor="contained"
+          />
+        </div>
       )}
       <ShareToast message={shareToast} />
-      {screen !== 'menu' && (
-        <Scoreboard
-          open={showScoreboard}
-          onClose={() => setShowScoreboard(false)}
-          refreshKey={scoreRefreshKey}
-        />
-      )}
     </div>
   );
 }
