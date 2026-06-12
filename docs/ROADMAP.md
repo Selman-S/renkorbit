@@ -50,7 +50,7 @@ Detay: [todos/V1.md](../todos/V1.md)
 - [x] Kullanıcı adı + toplam puan + liderlik tablosu
 - [x] Gizli süre cezası, combo FX, popup menü UX
 - [x] Puzzle paylaşım URL
-- [ ] Günlük liderlik (yerel)
+- [x] Tüm zamanlar liderlik (Supabase)
 
 Detay: [todos/V2.md](../todos/V2.md)
 

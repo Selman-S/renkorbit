@@ -31,3 +31,4 @@ Production build: `npm run build`
 - [Özellikler](./docs/FEATURES.md)
 - [Yol Haritası](./docs/ROADMAP.md)
 - [Görev Listesi](./TODO.md)
+- [Supabase liderlik kurulumu](./docs/SUPABASE.md)

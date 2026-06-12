@@ -119,11 +119,13 @@ Seviye çarpanı: 4 renk → 1, 8 renk → 2, 12 renk → 3
 
 ---
 
-## 6. Liderlik Tablosu
+## 6. Liderlik Tablosu (Supabase)
 
-- Mock rakip isimleri (sabit skorlar)
-- Oyuncu satırı: gerçek kullanıcı adı + toplam puan
-- İleride çevrimiçi liderlik planlanıyor
+- **Tüm zamanlar** — `total_score` sıralaması (ilk 50)
+- Her cihaz: `player_id` (UUID) + `username`
+- Kazanınca skor Supabase'e sync edilir
+- `.env` yoksa çevrimdışı mod (yalnızca yerel skor)
+- Kurulum: [SUPABASE.md](./SUPABASE.md)
 
 ---
 
@@ -206,5 +208,5 @@ src/
 | Kullanıcı adı | ✅ |
 | Şeffaf menü popup'ları | ✅ |
 | Puzzle paylaşım URL | ✅ |
-| Günlük liderlik | ⬜ |
+| Supabase liderlik (tüm zamanlar) | ✅ |
 | Gerçek cihaz testi | ⬜ |

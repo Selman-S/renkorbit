@@ -36,6 +36,7 @@ import {
   sharePuzzleLink,
   type SharedPuzzlePayload,
 } from './game/sharePuzzle';
+import { registerLeaderboardPlayer, syncLeaderboardScore } from './game/leaderboardApi';
 import { hasUsername, isTutorialDone, markTutorialDone } from './game/storage';
 import {
   calculateStars,
@@ -105,7 +106,8 @@ function App() {
       time: state.elapsedSec,
       moves: state.moves,
     });
-    addToTotalScore(score);
+    const newTotal = addToTotalScore(score);
+    void syncLeaderboardScore(newTotal);
 
     setEarnedStars(stars);
     setIsNewRecord(newRecord);
@@ -315,7 +317,12 @@ function App() {
   if (!usernameReady) {
     return (
       <div className="app">
-        <UsernamePrompt onComplete={() => setUsernameReady(true)} />
+        <UsernamePrompt
+          onComplete={() => {
+            setUsernameReady(true);
+            void registerLeaderboardPlayer();
+          }}
+        />
       </div>
     );
   }

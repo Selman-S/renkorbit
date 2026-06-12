@@ -1,7 +1,21 @@
 const TUTORIAL_KEY = 'renkorbit_tutorial_done';
 const SOUND_MUTED_KEY = 'renkorbit_sound_muted';
 const USERNAME_KEY = 'renkorbit_username';
+const PLAYER_ID_KEY = 'renkorbit_player_id';
 const MAX_USERNAME_LEN = 16;
+
+/** Stable anonymous id for cloud leaderboard rows */
+export function loadPlayerId(): string {
+  try {
+    const existing = localStorage.getItem(PLAYER_ID_KEY);
+    if (existing) return existing;
+    const id = crypto.randomUUID();
+    localStorage.setItem(PLAYER_ID_KEY, id);
+    return id;
+  } catch {
+    return crypto.randomUUID();
+  }
+}
 
 export function loadUsername(): string | null {
   try {

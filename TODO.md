@@ -11,7 +11,7 @@
 | Faz 0 — Hazırlık | ✅ Tamamlandı |
 | Faz 1 — MVP | 🟡 Çekirdek tamam, cihaz testi bekliyor |
 | Faz 2 — v1 | ✅ Tamamlandı |
-| Faz 3 — v2 | 🟡 Neredeyse tamam (günlük liderlik kaldı) |
+| Faz 3 — v2 | ✅ Tamamlandı |
 
 ---
 
@@ -29,7 +29,7 @@
 - [x] Galaksi yolu (9 adım, doğrusal kilitleme)
 - [x] Oyuncu adı (ilk açılış)
 - [x] Toplam puan (👑) — her galibiyet sonrası birikir
-- [x] Liderlik tablosu (mock rakipler + gerçek toplam puan)
+- [x] Liderlik tablosu (Supabase — tüm zamanlar)
 - [x] Profil / Mağaza / İstatistik — şeffaf popup (menü arkada kalır)
 
 ### Ekonomi & Koleksiyon
@@ -53,7 +53,7 @@
 
 ### v2 — Sosyal
 - [x] Puzzle paylaşım URL (seed + ayarlar)
-- [ ] Günlük liderlik (yerel)
+- [x] Tüm zamanlar liderlik (Supabase)
 
 ---
 
