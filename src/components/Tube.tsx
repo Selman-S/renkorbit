@@ -16,11 +16,11 @@ interface TubeProps {
   disabled: boolean;
   dragFrom: number | null;
   ballSkin?: BallSkinId;
-  onBallPointerDown: (
+  onTubePointerDown: (
     from: number,
     colorId: ColorId,
     event: PointerEvent<HTMLElement>,
-    el: HTMLElement,
+    anchorEl: HTMLElement,
   ) => void;
 }
 
@@ -35,7 +35,7 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
     disabled,
     dragFrom,
     ballSkin = 'classic',
-    onBallPointerDown,
+    onTubePointerDown,
   },
   ref,
 ) {
@@ -43,16 +43,34 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
   const slotsHeight = config.capacity * ballSize + (config.capacity - 1) * gap;
   const isDraggingFromHere = dragFrom === index;
   const topBallRef = useRef<HTMLDivElement>(null);
+  const hasBalls = column.length > 0;
+  const canPick = hasBalls && !disabled;
+
+  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
+    if (!canPick) return;
+    e.preventDefault();
+
+    const topColorId = column[column.length - 1];
+    const anchor = topBallRef.current ?? (e.currentTarget as HTMLElement);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    onTubePointerDown(index, topColorId, e, anchor);
+  };
 
   return (
     <motion.div
       ref={ref}
-      className={['tube', dropTarget && 'tube--valid', invalid && 'tube--invalid']
+      className={[
+        'tube',
+        canPick && 'tube--pickable',
+        dropTarget && 'tube--valid',
+        invalid && 'tube--invalid',
+      ]
         .filter(Boolean)
         .join(' ')}
       animate={invalid ? { x: [0, -6, 6, -6, 6, 0] } : { x: 0 }}
       transition={{ duration: 0.4 }}
       data-tube-index={index}
+      onPointerDown={canPick ? handlePointerDown : undefined}
     >
       <div className="tube__rim" aria-hidden />
       <div className="tube__glass" style={{ minHeight: slotsHeight }}>
@@ -74,17 +92,7 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
                   ) : (
                     <div
                       ref={isTop ? topBallRef : undefined}
-                      className={`tube__ball-wrap ${isTop ? 'tube__ball-wrap--top' : ''}`}
-                      onPointerDown={
-                        isTop && !disabled
-                          ? (e) => {
-                              e.preventDefault();
-                              const el = topBallRef.current ?? (e.currentTarget as HTMLElement);
-                              el.setPointerCapture(e.pointerId);
-                              onBallPointerDown(index, colorId, e, el);
-                            }
-                          : undefined
-                      }
+                      className="tube__ball-wrap"
                     >
                       <Ball colorId={colorId} size={ballSize} skin={ballSkin} />
                     </div>

@@ -1,15 +1,32 @@
 // Simulate useBoardLayout ball sizes at common mobile viewports
 
 function computeLayout(columnCount, capacity, vw, vh) {
-  const padX = 12;
-  const gap = columnCount <= 5 ? 8 : columnCount <= 9 ? 4 : 2;
-  const availableW = vw - padX * 2 - gap * (columnCount - 1);
-  const ballByWidth = Math.floor(availableW / columnCount) - 1;
+  const padX = 10;
   const stackAreaH = vh * 0.42;
   const slotGapRatio = 0.05;
   const ballByHeight = Math.floor(stackAreaH / (capacity * (1 + slotGapRatio)));
-  const ballSize = Math.max(14, Math.min(ballByWidth, ballByHeight));
-  return { ballSize, gap };
+
+  const gapCandidates =
+    columnCount <= 5 ? [12, 10, 8, 6] : columnCount <= 9 ? [8, 6, 5, 4] : [6, 5, 4, 3];
+
+  let fallback = { ballSize: 12, gap: 3 };
+
+  for (const gap of gapCandidates) {
+    const availableW = vw - padX * 2 - gap * (columnCount - 1);
+    const ballByWidth = Math.floor(availableW / columnCount);
+
+    if (ballByWidth >= 12) {
+      const ballSize = Math.max(12, Math.min(ballByWidth, ballByHeight));
+      return { ballSize, gap };
+    }
+
+    fallback = {
+      ballSize: Math.max(12, Math.min(ballByWidth, ballByHeight)),
+      gap,
+    };
+  }
+
+  return fallback;
 }
 
 const viewports = [
@@ -21,8 +38,9 @@ const viewports = [
 ];
 
 const levels = [
-  ['4 renk', 5, 4],
-  ['8 renk', 9, 8],
+  ['3 renk', 4, 3],
+  ['6 renk', 7, 6],
+  ['9 renk', 10, 9],
   ['12 renk', 13, 12],
 ];
 
@@ -31,7 +49,7 @@ for (const [name, vw, vh] of viewports) {
   console.log(`${name} (${vw}×${vh})`);
   for (const [label, cols, cap] of levels) {
     const { ballSize, gap } = computeLayout(cols, cap, vw, vh);
-    const totalW = cols * ballSize + (cols - 1) * gap + 24;
+    const totalW = cols * ballSize + (cols - 1) * gap + 20;
     const ok = totalW <= vw ? 'OK' : 'OVERFLOW';
     console.log(`  ${label}: ball ${ballSize}px, gap ${gap}px, width ~${totalW}px [${ok}]`);
   }

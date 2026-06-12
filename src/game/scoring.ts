@@ -38,14 +38,28 @@ export interface ScoreBreakdown {
   finalScore: number;
   moves: number;
   elapsedSec: number;
+  stepMultiplier: number;
 }
 
-function movePenaltyPerStep(config: LevelConfig): number {
-  return 3 * config.scoreMultiplier;
+const BASE_MOVE_PENALTY = 5;
+const BASE_TIME_PENALTY = 2;
+
+/** Later journey steps apply harsher end penalties */
+export function getJourneyStepMultiplier(journeyStep?: number | null): number {
+  if (!journeyStep || journeyStep < 1) return 1;
+  return 1 + (journeyStep - 1) * 0.1;
 }
 
-function timePenaltyPerSec(config: LevelConfig): number {
-  return 1 * config.scoreMultiplier;
+function movePenaltyPerStep(config: LevelConfig, journeyStep?: number | null): number {
+  return Math.round(
+    BASE_MOVE_PENALTY * config.scoreMultiplier * getJourneyStepMultiplier(journeyStep),
+  );
+}
+
+function timePenaltyPerSec(config: LevelConfig, journeyStep?: number | null): number {
+  return Math.round(
+    BASE_TIME_PENALTY * config.scoreMultiplier * getJourneyStepMultiplier(journeyStep),
+  );
 }
 
 /** End-of-game score with move and hidden-time penalties */
@@ -55,8 +69,10 @@ export function calculateScoreBreakdown(
   elapsedSec: number,
   config: LevelConfig,
   columns: Column[],
+  journeyStep?: number | null,
 ): ScoreBreakdown {
   const grossScore = comboScore;
+  const stepMultiplier = getJourneyStepMultiplier(journeyStep);
 
   if (!checkWin(columns, config.capacity)) {
     return {
@@ -66,11 +82,12 @@ export function calculateScoreBreakdown(
       finalScore: grossScore,
       moves,
       elapsedSec,
+      stepMultiplier,
     };
   }
 
-  const movePenalty = Math.round(moves * movePenaltyPerStep(config));
-  const timePenalty = Math.round(elapsedSec * timePenaltyPerSec(config));
+  const movePenalty = Math.round(moves * movePenaltyPerStep(config, journeyStep));
+  const timePenalty = Math.round(elapsedSec * timePenaltyPerSec(config, journeyStep));
   const finalScore = Math.max(0, grossScore - movePenalty - timePenalty);
 
   return {
@@ -80,6 +97,7 @@ export function calculateScoreBreakdown(
     finalScore,
     moves,
     elapsedSec,
+    stepMultiplier,
   };
 }
 
@@ -89,8 +107,16 @@ export function calculateScore(
   elapsedSec: number,
   config: LevelConfig,
   columns: Column[],
+  journeyStep?: number | null,
 ): number {
-  return calculateScoreBreakdown(comboScore, moves, elapsedSec, config, columns).finalScore;
+  return calculateScoreBreakdown(
+    comboScore,
+    moves,
+    elapsedSec,
+    config,
+    columns,
+    journeyStep,
+  ).finalScore;
 }
 
 const STORAGE_PREFIX = 'renkorbit_best_';

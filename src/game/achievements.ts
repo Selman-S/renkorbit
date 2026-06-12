@@ -1,10 +1,10 @@
 import { loadCoins } from './coins';
 import {
+  getColorTierStepRange,
   getCompletedCount,
   getStepProgress,
   PROGRESSION_STEPS,
 } from './progressionMap';
-import type { PlayMode } from './levelConfig';
 import { loadInventory, SHOP_ITEMS } from './shop';
 import type { StarCount } from './stars';
 
@@ -20,14 +20,14 @@ export interface Achievement {
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first_win', title: 'İlk Zafer', description: 'İlk adımı tamamla', emoji: '🏁' },
   { id: 'three_steps', title: 'Yörünge Keşfi', description: '3 adımı tamamla', emoji: '🛸' },
-  { id: 'all_journey', title: 'Galaksi Ustası', description: 'Tüm 9 adımı bitir', emoji: '👑' },
+  { id: 'journey_half', title: 'Yarı Yol', description: '15 adımı tamamla', emoji: '🌓' },
+  { id: 'all_journey', title: 'Galaksi Ustası', description: 'Tüm 30 adımı bitir', emoji: '👑' },
   { id: 'three_stars', title: 'Mükemmel', description: 'Bir adımda 3 yıldız kazan', emoji: '⭐' },
   { id: 'five_perfect', title: 'Yıldız Avcısı', description: '5 adımda 3 yıldız', emoji: '🌟' },
   { id: 'combo_5', title: 'Combo Ustası', description: 'Tek oyunda ×5 combo', emoji: '🔥' },
-  { id: 'timed_win', title: 'Zaman Avcısı', description: 'Süreli bir adımı bitir', emoji: '⏱️' },
-  { id: 'tier_4', title: 'Mini Usta', description: '4 renk adımlarını tamamla', emoji: '🪐' },
-  { id: 'tier_8', title: 'Süper Usta', description: '8 renk adımlarını tamamla', emoji: '🌠' },
-  { id: 'tier_12', title: 'Mega Usta', description: '12 renk adımlarını tamamla', emoji: '🚀' },
+  { id: 'tier_4', title: 'Küçük Usta', description: '4×4 adımlarını tamamla', emoji: '🌍' },
+  { id: 'tier_8', title: 'Büyük Usta', description: '8×8 adımlarını tamamla', emoji: '🌟' },
+  { id: 'tier_12', title: 'Galaksi Ustası II', description: '12×12 adımlarını tamamla', emoji: '🚀' },
   { id: 'coins_200', title: 'Zengin Gezgin', description: '200 coin biriktir', emoji: '🪙' },
   { id: 'collector', title: 'Koleksiyoncu', description: '3 mağaza ürünü edin', emoji: '💎' },
 ];
@@ -35,7 +35,6 @@ export const ACHIEVEMENTS: Achievement[] = [
 export interface WinAchievementContext {
   stars: StarCount;
   maxCombo: number;
-  playMode: PlayMode;
 }
 
 function loadUnlocked(): Set<string> {
@@ -82,6 +81,8 @@ function shouldUnlock(id: string, win?: WinAchievementContext): boolean {
       return completed >= 1;
     case 'three_steps':
       return completed >= 3;
+    case 'journey_half':
+      return completed >= 15;
     case 'all_journey':
       return completed >= PROGRESSION_STEPS.length;
     case 'three_stars':
@@ -90,14 +91,18 @@ function shouldUnlock(id: string, win?: WinAchievementContext): boolean {
       return perfect >= 5;
     case 'combo_5':
       return (win?.maxCombo ?? 0) >= 5;
-    case 'timed_win':
-      return win?.playMode === 'timed';
-    case 'tier_4':
-      return tierComplete(1, 3);
-    case 'tier_8':
-      return tierComplete(4, 6);
-    case 'tier_12':
-      return tierComplete(7, 9);
+    case 'tier_4': {
+      const [from, to] = getColorTierStepRange(4);
+      return tierComplete(from, to);
+    }
+    case 'tier_8': {
+      const [from, to] = getColorTierStepRange(8);
+      return tierComplete(from, to);
+    }
+    case 'tier_12': {
+      const [from, to] = getColorTierStepRange(12);
+      return tierComplete(from, to);
+    }
     case 'coins_200':
       return loadCoins() >= 200;
     case 'collector':

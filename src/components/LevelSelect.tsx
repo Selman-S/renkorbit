@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { getUnlockedCount, ACHIEVEMENTS } from '../game/achievements';
 import { loadCoins } from '../game/coins';
 import { loadTotalScore } from '../game/scoring';
@@ -8,6 +9,8 @@ import {
   isStepUnlocked,
   PROGRESSION_STEPS,
 } from '../game/progressionMap';
+import { usePwaInstall } from '../hooks/usePwaInstall';
+import { InstallAppModal } from './InstallAppModal';
 import { Profile } from './Profile';
 import { Shop } from './Shop';
 import { Statistics } from './Statistics';
@@ -52,6 +55,10 @@ export function LevelSelect({
   void journeyRefreshKey;
   void profileRefreshKey;
   void scoreRefreshKey;
+
+  const [showInstall, setShowInstall] = useState(false);
+  const { canInstall, isIos, hasNativePrompt, promptInstall } = usePwaInstall();
+
   const coins = loadCoins();
   const totalScore = loadTotalScore();
   const badges = getUnlockedCount();
@@ -147,6 +154,18 @@ export function LevelSelect({
 
       <footer className="level-select__footer level-select__footer--compact">
         <div className="level-select__actions">
+          {canInstall && (
+            <button
+              type="button"
+              className="level-select__scores-btn"
+              onClick={() => {
+                if (hasNativePrompt) void promptInstall();
+                else setShowInstall(true);
+              }}
+            >
+              📲 Yükle
+            </button>
+          )}
           {onOpenProfile && (
             <button type="button" className="level-select__scores-btn" onClick={onOpenProfile}>
               🏅 Profil
@@ -178,6 +197,19 @@ export function LevelSelect({
       {onCloseStatistics && (
         <Statistics open={showStatistics} onClose={onCloseStatistics} />
       )}
+
+      <InstallAppModal
+        open={showInstall}
+        isIos={isIos}
+        onClose={() => setShowInstall(false)}
+        onNativeInstall={
+          hasNativePrompt
+            ? () => {
+                void promptInstall().then(() => setShowInstall(false));
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

@@ -39,7 +39,7 @@ export function DragFloatingBall({
       animate={{ left, top }}
       transition={
         dropping
-          ? { type: 'tween', duration: 0.45, ease: [0.34, 1.15, 0.64, 1] }
+          ? { type: 'tween', duration: 0.28, ease: [0.34, 1.15, 0.64, 1] }
           : { duration: 0 }
       }
       onAnimationComplete={() => {

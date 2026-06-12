@@ -42,6 +42,7 @@ export function WinModal({
     state.elapsedSec,
     state.config,
     state.columns,
+    state.journeyStep,
   );
   const open = state.status === 'won';
 

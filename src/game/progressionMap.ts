@@ -1,4 +1,5 @@
-import type { ColorCount, GameSettings, LayoutMode, PlayMode } from './levelConfig';
+import type { ColorCount, GameSettings, LayoutMode } from './levelConfig';
+import { isColorCount, MIN_COLORS, MAX_COLORS } from './levelConfig';
 import type { StarCount } from './stars';
 
 const STORAGE_KEY = 'renkorbit_journey';
@@ -7,96 +8,82 @@ export interface ProgressionStep {
   index: number;
   colors: ColorCount;
   layoutMode: LayoutMode;
-  playMode: PlayMode;
   title: string;
   subtitle: string;
   emoji: string;
 }
 
-/** Linear journey — complete each step to unlock the next */
-export const PROGRESSION_STEPS: ProgressionStep[] = [
-  {
-    index: 1,
-    colors: 4,
-    layoutMode: 'rows',
-    playMode: 'relaxed',
-    title: 'İlk Yörünge',
-    subtitle: '4 renk · Sıralı · Rahat',
-    emoji: '🪐',
-  },
-  {
-    index: 2,
-    colors: 4,
-    layoutMode: 'mixed',
-    playMode: 'relaxed',
-    title: 'Karışık Başlangıç',
-    subtitle: '4 renk · Karışık · Rahat',
-    emoji: '🎲',
-  },
-  {
-    index: 3,
-    colors: 4,
-    layoutMode: 'mixed',
-    playMode: 'timed',
-    title: 'Zaman Baskısı',
-    subtitle: '4 renk · Karışık · Süreli',
-    emoji: '⏱️',
-  },
-  {
-    index: 4,
-    colors: 8,
-    layoutMode: 'rows',
-    playMode: 'relaxed',
-    title: 'Süper Yörünge',
-    subtitle: '8 renk · Sıralı · Rahat',
-    emoji: '🌟',
-  },
-  {
-    index: 5,
-    colors: 8,
-    layoutMode: 'mixed',
-    playMode: 'relaxed',
-    title: 'Süper Karışık',
-    subtitle: '8 renk · Karışık · Rahat',
-    emoji: '🌀',
-  },
-  {
-    index: 6,
-    colors: 8,
-    layoutMode: 'mixed',
-    playMode: 'timed',
-    title: 'Süper Sprint',
-    subtitle: '8 renk · Karışık · Süreli',
-    emoji: '⚡',
-  },
-  {
-    index: 7,
-    colors: 12,
-    layoutMode: 'rows',
-    playMode: 'relaxed',
-    title: 'Mega Galaksi',
-    subtitle: '12 renk · Sıralı · Rahat',
-    emoji: '🚀',
-  },
-  {
-    index: 8,
-    colors: 12,
-    layoutMode: 'mixed',
-    playMode: 'relaxed',
-    title: 'Mega Kaos',
-    subtitle: '12 renk · Karışık · Rahat',
-    emoji: '🌌',
-  },
-  {
-    index: 9,
-    colors: 12,
-    layoutMode: 'mixed',
-    playMode: 'timed',
-    title: 'Galaksi Ustası',
-    subtitle: '12 renk · Karışık · Süreli',
-    emoji: '👑',
-  },
-];
+const TIER_EMOJIS: Record<number, string> = {
+  3: '🪐',
+  4: '🌍',
+  5: '🌙',
+  6: '☄️',
+  7: '⭐',
+  8: '🌟',
+  9: '💫',
+  10: '🛸',
+  11: '🌠',
+  12: '👑',
+};
+
+const TIER_NAMES: Record<number, string> = {
+  3: 'Mini',
+  4: 'Küçük',
+  5: 'Orta',
+  6: 'Geniş',
+  7: 'Süper',
+  8: 'Büyük',
+  9: 'Mega',
+  10: 'Ultra',
+  11: 'Kozmik',
+  12: 'Galaksi',
+};
+
+function buildProgressionSteps(): ProgressionStep[] {
+  const steps: ProgressionStep[] = [];
+  let index = 1;
+
+  for (let colors = MIN_COLORS; colors <= MAX_COLORS; colors++) {
+    if (!isColorCount(colors)) continue;
+    const emoji = TIER_EMOJIS[colors] ?? '✨';
+    const tier = TIER_NAMES[colors] ?? `${colors}`;
+
+    steps.push({
+      index,
+      colors,
+      layoutMode: 'rows',
+      title: `${tier} Yörünge`,
+      subtitle: `${colors}×${colors} · Sıralı`,
+      emoji,
+    });
+    index++;
+
+    steps.push({
+      index,
+      colors,
+      layoutMode: 'mixed',
+      title: `${tier} Karışık`,
+      subtitle: `${colors}×${colors} · Karışık`,
+      emoji,
+    });
+    index++;
+
+    steps.push({
+      index,
+      colors,
+      layoutMode: 'mixed',
+      title: `${tier} Usta`,
+      subtitle: `${colors}×${colors} · Usta`,
+      emoji,
+    });
+    index++;
+  }
+
+  return steps;
+}
+
+/** Linear journey — 30 steps from 3×3 to 12×12 */
+export const PROGRESSION_STEPS: ProgressionStep[] = buildProgressionSteps();
 
 export interface StepProgress {
   stars: StarCount;
@@ -122,7 +109,7 @@ export function getJourneySettings(stepIndex: number): GameSettings {
   return {
     colors: step.colors,
     layoutMode: step.layoutMode,
-    playMode: step.playMode,
+    playMode: 'relaxed',
   };
 }
 
@@ -134,13 +121,19 @@ export function getJourneySeed(stepIndex: number): number {
   const step = getJourneyStep(stepIndex);
   if (!step) return 1;
   return hashString(
-    `renkorbit-journey-${step.colors}-${step.layoutMode}-${step.playMode}-${stepIndex}`,
+    `renkorbit-journey-v2-${step.colors}-${step.layoutMode}-${stepIndex}`,
   );
 }
 
 export function getJourneyLabel(stepIndex: number): string {
   const step = getJourneyStep(stepIndex);
   return step ? `${step.emoji} ${step.title}` : `Adım ${stepIndex}`;
+}
+
+/** Step range for a color tier (3 steps each) */
+export function getColorTierStepRange(colors: ColorCount): [number, number] {
+  const start = (colors - MIN_COLORS) * 3 + 1;
+  return [start, start + 2];
 }
 
 function loadStore(): JourneyStore {
@@ -180,7 +173,6 @@ export function saveJourneyWin(stepIndex: number, stars: StarCount): void {
   saveStore(store);
 }
 
-/** First incomplete unlocked step — where the player should continue */
 export function getCurrentStepIndex(): number {
   for (const step of PROGRESSION_STEPS) {
     if (!getStepProgress(step.index).completed) return step.index;

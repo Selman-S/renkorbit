@@ -5,25 +5,37 @@ export interface BoardLayout {
   gap: number;
 }
 
-// Fit all columns on screen without horizontal scroll
+// Prefer wider column gaps; shrink ball size so all columns fit without scroll
 function computeLayout(columnCount: number, capacity: number): BoardLayout {
   const vw = window.innerWidth;
   const vh = window.innerHeight;
 
-  const padX = 12;
-  const gap = columnCount <= 5 ? 8 : columnCount <= 9 ? 4 : 2;
-
-  const availableW = vw - padX * 2 - gap * (columnCount - 1);
-  const ballByWidth = Math.floor(availableW / columnCount) - 1;
-
-  // ~42% of viewport height for the tube stack (below HUD, above controls)
+  const padX = 10;
   const stackAreaH = vh * 0.42;
   const slotGapRatio = 0.05;
   const ballByHeight = Math.floor(stackAreaH / (capacity * (1 + slotGapRatio)));
 
-  const ballSize = Math.max(14, Math.min(ballByWidth, ballByHeight));
+  const gapCandidates =
+    columnCount <= 5 ? [12, 10, 8, 6] : columnCount <= 9 ? [8, 6, 5, 4] : [6, 5, 4, 3];
 
-  return { ballSize, gap };
+  let fallback: BoardLayout = { ballSize: 12, gap: 3 };
+
+  for (const gap of gapCandidates) {
+    const availableW = vw - padX * 2 - gap * (columnCount - 1);
+    const ballByWidth = Math.floor(availableW / columnCount);
+
+    if (ballByWidth >= 12) {
+      const ballSize = Math.max(12, Math.min(ballByWidth, ballByHeight));
+      return { ballSize, gap };
+    }
+
+    fallback = {
+      ballSize: Math.max(12, Math.min(ballByWidth, ballByHeight)),
+      gap,
+    };
+  }
+
+  return fallback;
 }
 
 export function useBoardLayout(columnCount: number, capacity: number): BoardLayout {

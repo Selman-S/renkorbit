@@ -98,6 +98,7 @@ function App() {
       state.elapsedSec,
       state.config,
       state.columns,
+      state.journeyStep,
     );
     const stars = calculateStars(state.moves, state.settings);
 
@@ -143,7 +144,6 @@ function App() {
     const unlocked = checkAchievements({
       stars,
       maxCombo: state.maxCombo,
-      playMode: state.settings.playMode,
     });
     if (unlocked.length > 0) {
       setNewAchievements(unlocked);

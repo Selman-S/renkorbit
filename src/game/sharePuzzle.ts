@@ -1,9 +1,11 @@
-import type { GameSettings, ColorCount, LayoutMode, PlayMode } from './levelConfig';
+import type { GameSettings, LayoutMode, PlayMode } from './levelConfig';
+import { isColorCount } from './levelConfig';
 import {
   getJourneyLabel,
   getJourneySeed,
   getJourneySettings,
   getJourneyStep,
+  PROGRESSION_STEPS,
 } from './progressionMap';
 import type { GameState } from './types';
 
@@ -17,10 +19,6 @@ const LAYOUT_FROM_CODE: Record<string, LayoutMode> = { r: 'rows', m: 'mixed' };
 const LAYOUT_TO_CODE: Record<LayoutMode, string> = { rows: 'r', mixed: 'm' };
 const PLAY_FROM_CODE: Record<string, PlayMode> = { R: 'relaxed', T: 'timed' };
 const PLAY_TO_CODE: Record<PlayMode, string> = { relaxed: 'R', timed: 'T' };
-
-function isColorCount(value: number): value is ColorCount {
-  return value === 4 || value === 8 || value === 12;
-}
 
 /** Build share URL for the current puzzle */
 export function buildShareUrl(state: GameState): string {
@@ -43,7 +41,14 @@ export function parseShareFromUrl(search: string): SharedPuzzlePayload | null {
   const stepRaw = params.get('step');
   if (stepRaw) {
     const step = Number(stepRaw);
-    if (!Number.isInteger(step) || step < 1 || step > 9 || !getJourneyStep(step)) return null;
+    if (
+      !Number.isInteger(step) ||
+      step < 1 ||
+      step > PROGRESSION_STEPS.length ||
+      !getJourneyStep(step)
+    ) {
+      return null;
+    }
     return {
       settings: getJourneySettings(step),
       seed: getJourneySeed(step),

@@ -7,23 +7,15 @@ export interface StarThresholds {
   two: { maxMoves: number };
 }
 
-// Star targets — move efficiency only (no time)
-const THRESHOLDS: Record<string, StarThresholds> = {
-  '4_rows': { three: { maxMoves: 15 }, two: { maxMoves: 25 } },
-  '4_mixed': { three: { maxMoves: 25 }, two: { maxMoves: 40 } },
-  '8_rows': { three: { maxMoves: 40 }, two: { maxMoves: 70 } },
-  '8_mixed': { three: { maxMoves: 60 }, two: { maxMoves: 100 } },
-  '12_rows': { three: { maxMoves: 80 }, two: { maxMoves: 140 } },
-  '12_mixed': { three: { maxMoves: 120 }, two: { maxMoves: 200 } },
-};
-
-/** Star move targets depend on color/layout only, not play mode */
-function getThresholdKey(settings: GameSettings): string {
-  return `${settings.colors}_${settings.layoutMode}`;
-}
-
+/** Move targets scale with board size and layout difficulty */
 export function getStarThresholds(settings: GameSettings): StarThresholds {
-  return THRESHOLDS[getThresholdKey(settings)];
+  const n = settings.colors;
+  const hard = settings.layoutMode === 'mixed' ? 1.55 : 1;
+
+  return {
+    three: { maxMoves: Math.round(n * (settings.layoutMode === 'rows' ? 4 : 6.5) * hard) },
+    two: { maxMoves: Math.round(n * (settings.layoutMode === 'rows' ? 6.5 : 10) * hard) },
+  };
 }
 
 export function calculateStars(moves: number, settings: GameSettings): StarCount {
