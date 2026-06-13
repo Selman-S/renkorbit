@@ -43,6 +43,37 @@ export interface ScoreBreakdown {
 
 const BASE_MOVE_PENALTY = 5;
 const BASE_TIME_PENALTY = 2;
+const MAX_PENALTY_RATIO = 0.25;
+
+/** Scale move + time penalties so combined cut stays within gross score budget */
+function applyPenaltyCap(
+  grossScore: number,
+  movePenalty: number,
+  timePenalty: number,
+): { movePenalty: number; timePenalty: number } {
+  if (grossScore <= 0) return { movePenalty: 0, timePenalty: 0 };
+
+  const maxTotal = Math.round(grossScore * MAX_PENALTY_RATIO);
+  const rawTotal = movePenalty + timePenalty;
+
+  if (rawTotal <= maxTotal) {
+    return { movePenalty, timePenalty };
+  }
+
+  if (rawTotal <= 0) {
+    return { movePenalty: 0, timePenalty: 0 };
+  }
+
+  const scale = maxTotal / rawTotal;
+  let cappedMove = Math.round(movePenalty * scale);
+  let cappedTime = Math.round(timePenalty * scale);
+
+  if (cappedMove + cappedTime > maxTotal) {
+    cappedTime = Math.max(0, maxTotal - cappedMove);
+  }
+
+  return { movePenalty: cappedMove, timePenalty: cappedTime };
+}
 
 /** Later journey steps apply harsher end penalties */
 export function getJourneyStepMultiplier(journeyStep?: number | null): number {
@@ -86,8 +117,9 @@ export function calculateScoreBreakdown(
     };
   }
 
-  const movePenalty = Math.round(moves * movePenaltyPerStep(config, journeyStep));
-  const timePenalty = Math.round(elapsedSec * timePenaltyPerSec(config, journeyStep));
+  const rawMovePenalty = Math.round(moves * movePenaltyPerStep(config, journeyStep));
+  const rawTimePenalty = Math.round(elapsedSec * timePenaltyPerSec(config, journeyStep));
+  const { movePenalty, timePenalty } = applyPenaltyCap(grossScore, rawMovePenalty, rawTimePenalty);
   const finalScore = Math.max(0, grossScore - movePenalty - timePenalty);
 
   return {

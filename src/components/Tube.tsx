@@ -81,22 +81,27 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
             return (
               <div
                 key={`${index}-slot-${slot}`}
-                className={`tube__slot ${colorId === null ? 'tube__slot--empty' : ''}`}
-                style={{ width: ballSize, height: ballSize }}
+                className={[
+                  'tube__slot',
+                  colorId === null && 'tube__slot--empty',
+                  isTop && canPick && 'tube__slot--pickable',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                style={{
+                  width: isTop ? '100%' : ballSize,
+                  height: ballSize,
+                  minWidth: ballSize,
+                }}
+                onPointerDown={
+                  isTop && canPick ? (e) => handleTopPointerDown(e, colorId) : undefined
+                }
               >
                 {colorId !== null &&
                   (showGhost ? (
                     <Ball colorId={colorId} colorCount={config.colors} size={ballSize} ghost />
                   ) : (
-                    <div
-                      ref={isTop ? topBallRef : undefined}
-                      className={`tube__ball-wrap ${isTop ? 'tube__ball-wrap--top' : ''}`}
-                      onPointerDown={
-                        isTop && canPick
-                          ? (e) => handleTopPointerDown(e, colorId)
-                          : undefined
-                      }
-                    >
+                    <div ref={isTop ? topBallRef : undefined} className="tube__ball-wrap">
                       <Ball
                         colorId={colorId}
                         colorCount={config.colors}

@@ -67,18 +67,13 @@
   pointer-events: none;
 }
 
-/* Pick only near the top ball — not from the bottom of the tube */
-.tube__ball-wrap--top {
-  pointer-events: auto;
+/* Top row — full tube width, picks uppermost ball */
+.tube__slot--pickable {
   cursor: grab;
   touch-action: none;
-  position: relative;
-  z-index: 2;
-  padding: 10px;
-  margin: -10px;
 }
 
-.tube__ball-wrap--top:active {
+.tube__slot--pickable:active {
   cursor: grabbing;
 }
 
