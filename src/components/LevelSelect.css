@@ -70,6 +70,143 @@
   flex-shrink: 0;
 }
 
+.level-select__continue-bar {
+  flex-shrink: 0;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+.level-select__continue-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 14px 22px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #c084fc 0%, #a855f7 38%, #38bdf8 72%, #22d3ee 100%);
+  color: #fff;
+  font-size: clamp(0.88rem, 3.6vw, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  touch-action: manipulation;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    0 4px 22px rgba(168, 85, 247, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -2px 12px rgba(79, 70, 229, 0.25);
+}
+
+.level-select__continue-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.04) 42%,
+    rgba(0, 0, 0, 0.08) 100%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
+.level-select__continue-bolt {
+  position: absolute;
+  top: 50%;
+  left: -14%;
+  width: 28px;
+  height: 78%;
+  color: rgba(255, 255, 255, 0.92);
+  transform: translateY(-50%);
+  pointer-events: none;
+  z-index: 2;
+  filter:
+    drop-shadow(0 0 6px rgba(255, 255, 255, 0.95))
+    drop-shadow(0 0 14px rgba(186, 230, 253, 0.85))
+    drop-shadow(0 0 22px rgba(34, 211, 238, 0.55));
+  animation: continue-bolt-travel 2.6s ease-in-out infinite;
+}
+
+.level-select__continue-bolt svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.level-select__continue-text {
+  position: relative;
+  z-index: 3;
+  text-align: center;
+  line-height: 1.2;
+  text-shadow: 0 1px 10px rgba(79, 70, 229, 0.35);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.level-select__continue-sep {
+  opacity: 0.85;
+  font-weight: 700;
+}
+
+.level-select__continue-btn:active {
+  transform: scale(0.985);
+}
+
+@keyframes continue-bolt-travel {
+  0% {
+    left: -14%;
+    opacity: 0;
+    transform: translateY(-50%) scaleX(1);
+  }
+
+  6% {
+    opacity: 1;
+  }
+
+  46% {
+    left: calc(100% - 14px);
+    opacity: 1;
+    transform: translateY(-50%) scaleX(1);
+  }
+
+  54% {
+    opacity: 0;
+  }
+
+  55% {
+    left: calc(100% - 14px);
+    opacity: 0;
+    transform: translateY(-50%) scaleX(-1);
+  }
+
+  61% {
+    opacity: 1;
+  }
+
+  100% {
+    left: -14%;
+    opacity: 1;
+    transform: translateY(-50%) scaleX(-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .level-select__continue-bolt {
+    animation: none;
+    opacity: 0.35;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
 .level-select__logo {
   position: relative;
   width: 44px;
@@ -133,51 +270,6 @@
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--accent-gold);
-}
-
-.level-select__continue {
-  position: relative;
-  flex-shrink: 0;
-  width: 100%;
-  max-width: 400px;
-  margin: 0 auto 8px;
-  min-height: 48px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 14px;
-  background: var(--btn-play);
-  color: #fff;
-  font-size: 0.92rem;
-  font-weight: 800;
-  cursor: pointer;
-  touch-action: manipulation;
-  box-shadow: var(--btn-play-shadow);
-  overflow: hidden;
-}
-
-.level-select__continue-glow {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    105deg,
-    transparent 40%,
-    rgba(255, 255, 255, 0.25) 50%,
-    transparent 60%
-  );
-  animation: play-shine 3s ease-in-out infinite;
-}
-
-.level-select__continue-text {
-  position: relative;
-  z-index: 1;
-  display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.level-select__continue:active {
-  transform: scale(0.98);
 }
 
 /* Mission cards — scroll if needed, hidden scrollbar */

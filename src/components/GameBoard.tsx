@@ -32,7 +32,17 @@ type FloatingBallState =
       targetY: number;
     };
 
-const TOUCH_LIFT_PX = 56;
+const TOUCH_LIFT_MIN_PX = 56;
+
+/** Lift floating ball above finger on touch / coarse-pointer devices */
+function getTouchLiftPx(event: PointerEvent | ReactPointerEvent<HTMLElement>, ballSize: number): number {
+  const isTouchLike =
+    event.pointerType === 'touch' ||
+    (event.pointerType === '' && typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches);
+
+  if (!isTouchLike) return 0;
+  return Math.max(TOUCH_LIFT_MIN_PX, Math.round(ballSize * 1.15));
+}
 
 interface TubeSnapInfo {
   index: number;
@@ -141,7 +151,7 @@ export function GameBoard({
   }, [onBallMove, onDrop, setHoverIfChanged]);
 
   const handleTubePointerDown = useCallback(
-    (from: number, colorId: ColorId, event: ReactPointerEvent<HTMLElement>, anchorEl: HTMLElement) => {
+    (from: number, colorId: ColorId, event: ReactPointerEvent<HTMLElement>, _anchorEl: HTMLElement) => {
       if (disabled) return;
 
       const pending = floatingRef.current;
@@ -151,21 +161,20 @@ export function GameBoard({
         return;
       }
 
-      const rect = anchorEl.getBoundingClientRect();
-      const liftY = event.pointerType === 'touch' ? TOUCH_LIFT_PX : 0;
+      const liftY = getTouchLiftPx(event, ballSize);
 
       setFloating({
         mode: 'drag',
         from,
         colorId,
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2 - liftY,
+        x: event.clientX,
+        y: event.clientY - liftY,
         liftY,
       });
       setHoverIfChanged(null);
       onPick?.();
     },
-    [disabled, commitPendingDrop, setHoverIfChanged, onPick],
+    [disabled, commitPendingDrop, setHoverIfChanged, onPick, ballSize],
   );
 
   const handleDropComplete = useCallback(() => {

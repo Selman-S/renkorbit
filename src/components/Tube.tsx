@@ -46,14 +46,14 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
   const hasBalls = column.length > 0;
   const canPick = hasBalls && !disabled;
 
-  const handleTopPointerDown = (e: PointerEvent<HTMLDivElement>, colorId: ColorId) => {
+  const handlePointerDown = (e: PointerEvent<HTMLDivElement>) => {
     if (!canPick) return;
     e.preventDefault();
-    e.stopPropagation();
 
+    const topColorId = column[column.length - 1];
     const anchor = topBallRef.current ?? (e.currentTarget as HTMLElement);
     e.currentTarget.setPointerCapture(e.pointerId);
-    onTubePointerDown(index, colorId, e, anchor);
+    onTubePointerDown(index, topColorId, e, anchor);
   };
 
   return (
@@ -61,6 +61,7 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
       ref={ref}
       className={[
         'tube',
+        canPick && 'tube--pickable',
         dropTarget && 'tube--valid',
         invalid && 'tube--invalid',
       ]
@@ -69,6 +70,7 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
       animate={invalid ? { x: [0, -6, 6, -6, 6, 0] } : { x: 0 }}
       transition={{ duration: 0.4 }}
       data-tube-index={index}
+      onPointerDown={canPick ? handlePointerDown : undefined}
     >
       <div className="tube__rim" aria-hidden />
       <div className="tube__glass" style={{ minHeight: slotsHeight }}>
@@ -81,27 +83,17 @@ export const Tube = forwardRef<HTMLDivElement, TubeProps>(function Tube(
             return (
               <div
                 key={`${index}-slot-${slot}`}
-                className={[
-                  'tube__slot',
-                  colorId === null && 'tube__slot--empty',
-                  isTop && canPick && 'tube__slot--pickable',
-                ]
-                  .filter(Boolean)
-                  .join(' ')}
-                style={{
-                  width: isTop ? '100%' : ballSize,
-                  height: ballSize,
-                  minWidth: ballSize,
-                }}
-                onPointerDown={
-                  isTop && canPick ? (e) => handleTopPointerDown(e, colorId) : undefined
-                }
+                className={`tube__slot ${colorId === null ? 'tube__slot--empty' : ''}`}
+                style={{ width: ballSize, height: ballSize }}
               >
                 {colorId !== null &&
                   (showGhost ? (
                     <Ball colorId={colorId} colorCount={config.colors} size={ballSize} ghost />
                   ) : (
-                    <div ref={isTop ? topBallRef : undefined} className="tube__ball-wrap">
+                    <div
+                      ref={isTop ? topBallRef : undefined}
+                      className="tube__ball-wrap"
+                    >
                       <Ball
                         colorId={colorId}
                         colorCount={config.colors}

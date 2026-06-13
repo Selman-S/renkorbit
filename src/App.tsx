@@ -206,7 +206,7 @@ function App() {
 
     breaks.forEach((combo, index) => {
       const timer = window.setTimeout(() => {
-        play('comboBreak');
+        play('comboBreak', combo);
         const id = burstIdRef.current++;
         setComboBursts((prev) => [...prev, { id, kind: 'break', combo }]);
       }, index * 120);

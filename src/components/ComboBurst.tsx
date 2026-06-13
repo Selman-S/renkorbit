@@ -20,7 +20,6 @@ interface ComboBurstProps {
   onDone: (id: number) => void;
 }
 
-/** Center burst — gain scales up; break falls with a red flash */
 export function ComboBurst({ item, onDone }: ComboBurstProps) {
   const isBreak = item.kind === 'break';
   const theme = isBreak ? getComboBreakTheme() : getComboTheme(item.combo);

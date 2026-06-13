@@ -9,6 +9,14 @@
   max-width: 100%;
 }
 
+.tube--pickable {
+  cursor: grab;
+}
+
+.tube--pickable:active {
+  cursor: grabbing;
+}
+
 /* Open mouth at the top — player reaches in from above */
 .tube__rim {
   width: 100%;
@@ -65,16 +73,6 @@
 
 .tube__ball-wrap {
   pointer-events: none;
-}
-
-/* Top row — full tube width, picks uppermost ball */
-.tube__slot--pickable {
-  cursor: grab;
-  touch-action: none;
-}
-
-.tube__slot--pickable:active {
-  cursor: grabbing;
 }
 
 /* Sealed bottom of the pipe */

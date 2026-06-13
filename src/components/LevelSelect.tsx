@@ -58,13 +58,13 @@ export function LevelSelect({
   onOpenShop,
   onOpenStatistics,
 }: LevelSelectProps) {
+  void journeyRefreshKey;
   void profileRefreshKey;
   void scoreRefreshKey;
 
   const [showInstall, setShowInstall] = useState(false);
   const [showContinueCta, setShowContinueCta] = useState(false);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const currentStepRef = useRef<HTMLButtonElement>(null);
+  const currentStepRef = useRef<HTMLLIElement | null>(null);
   const { canInstall, isIos, hasNativePrompt, promptInstall } = usePwaInstall();
 
   const coins = loadCoins();
@@ -72,48 +72,29 @@ export function LevelSelect({
   const badges = getUnlockedCount();
   const currentStep = getCurrentStepIndex();
   const completed = getCompletedCount();
-  const currentStepMeta = getJourneyStep(currentStep);
   const currentProgress = getStepProgress(currentStep);
-  const hasActiveStep = !currentProgress.completed && isStepUnlocked(currentStep);
-  const continueLabel = completed === 0 ? 'Oyna' : 'Devam et';
+  const currentStepMeta = getJourneyStep(currentStep);
+  const continueLabel = currentProgress.completed ? 'Oyna' : 'Devam et';
+  const continueStepTitle = currentStepMeta
+    ? `${currentStep}. ${currentStepMeta.title}`
+    : `Adım ${currentStep}`;
 
-  // Show top CTA when the active step sits below the fold
+  // Sticky CTA when the current step is below the fold
   useEffect(() => {
-    const scrollEl = scrollRef.current;
-    const stepEl = currentStepRef.current;
-
-    if (!hasActiveStep || !scrollEl || !stepEl) {
+    const node = currentStepRef.current;
+    if (!node) {
       setShowContinueCta(false);
       return;
     }
 
-    const updateVisibility = () => {
-      const scrollRect = scrollEl.getBoundingClientRect();
-      const stepRect = stepEl.getBoundingClientRect();
-      const visibleTop = Math.max(scrollRect.top, stepRect.top);
-      const visibleBottom = Math.min(scrollRect.bottom, stepRect.bottom);
-      const visibleHeight = Math.max(0, visibleBottom - visibleTop);
-      const ratio = visibleHeight / stepRect.height;
-      setShowContinueCta(ratio < 0.65);
-    };
-
-    updateVisibility();
-
     const observer = new IntersectionObserver(
-      ([entry]) => setShowContinueCta(!entry.isIntersecting || entry.intersectionRatio < 0.65),
-      { root: scrollEl, threshold: [0, 0.35, 0.65, 1] },
+      ([entry]) => setShowContinueCta(!entry.isIntersecting),
+      { root: null, threshold: 0.35 },
     );
 
-    observer.observe(stepEl);
-    scrollEl.addEventListener('scroll', updateVisibility, { passive: true });
-    window.addEventListener('resize', updateVisibility);
-
-    return () => {
-      observer.disconnect();
-      scrollEl.removeEventListener('scroll', updateVisibility);
-      window.removeEventListener('resize', updateVisibility);
-    };
-  }, [currentStep, hasActiveStep, journeyRefreshKey]);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [currentStep, journeyRefreshKey]);
 
   return (
     <div className="level-select">
@@ -151,20 +132,34 @@ export function LevelSelect({
         </p>
       </header>
 
-      {showContinueCta && hasActiveStep && currentStepMeta && (
-        <button
-          type="button"
-          className="level-select__continue"
-          onClick={() => onStartStep(currentStep)}
-        >
-          <span className="level-select__continue-glow" aria-hidden />
-          <span className="level-select__continue-text">
-            {continueLabel} · {currentStep}. {currentStepMeta.title}
-          </span>
-        </button>
+      {showContinueCta && (
+        <div className="level-select__continue-bar">
+          <button
+            type="button"
+            className="level-select__continue-btn"
+            onClick={() => onStartStep(currentStep)}
+          >
+            <span className="level-select__continue-bolt" aria-hidden>
+              <svg viewBox="0 0 32 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M16 0L9 19h5L7 52l18-28h-6l9-24H16z"
+                  fill="currentColor"
+                />
+              </svg>
+            </span>
+            <span className="level-select__continue-text">
+              {continueLabel}
+              <span className="level-select__continue-sep" aria-hidden>
+                {' '}
+                ·{' '}
+              </span>
+              {continueStepTitle}
+            </span>
+          </button>
+        </div>
       )}
 
-      <div ref={scrollRef} className="level-select__scroll">
+      <div className="level-select__scroll">
         <div className="level-select__scroll-inner">
           <p className="level-select__section-title">Galaksi yolu</p>
 
@@ -175,9 +170,12 @@ export function LevelSelect({
               const isCurrent = step.index === currentStep && !progress.completed;
 
               return (
-                <li key={step.index} className="journey-path__item">
+                <li
+                  key={step.index}
+                  className="journey-path__item"
+                  ref={isCurrent ? currentStepRef : undefined}
+                >
                   <button
-                    ref={isCurrent ? currentStepRef : undefined}
                     type="button"
                     className={[
                       'journey-node',

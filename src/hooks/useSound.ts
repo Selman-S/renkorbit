@@ -8,9 +8,7 @@ let sharedCtx: AudioContext | null = null;
 function getAudioContext(): AudioContext | null {
   if (typeof window === 'undefined') return null;
   if (!sharedCtx) {
-    const Ctx =
-      window.AudioContext ??
-      (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    const Ctx = window.AudioContext ?? (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Ctx) return null;
     sharedCtx = new Ctx();
   }
@@ -44,6 +42,16 @@ function playTone(
   osc.stop(t + duration + 0.02);
 }
 
+// Light applause layered on win — still simple synth, no audio files
+function playApplause() {
+  const start = 0.35;
+  for (let i = 0; i < 14; i++) {
+    const when = start + i * 0.055 + Math.random() * 0.03;
+    const freq = 900 + Math.random() * 1400;
+    playTone(freq, 0.04 + Math.random() * 0.03, 'triangle', 0.018 + Math.random() * 0.012, when);
+  }
+}
+
 function playEventSound(event: SoundEvent, comboLevel = 1) {
   switch (event) {
     case 'pick':
@@ -61,6 +69,11 @@ function playEventSound(event: SoundEvent, comboLevel = 1) {
       break;
     case 'win':
       [523, 659, 784, 1047].forEach((f, i) => playTone(f, 0.18, 'sine', 0.07, i * 0.1));
+      playApplause();
+      break;
+    case 'comboBreak':
+      playTone(220, 0.12, 'square', 0.06);
+      playTone(165, 0.16, 'sawtooth', 0.04, 0.06);
       break;
     case 'combo': {
       const level = Math.min(Math.max(comboLevel, 1), 5);
@@ -68,12 +81,6 @@ function playEventSound(event: SoundEvent, comboLevel = 1) {
       playTone(base, 0.09, 'sine', 0.1);
       playTone(base * 1.28, 0.11, 'triangle', 0.08, 0.05);
       playTone(base * 1.55, 0.14, 'sine', 0.05, 0.1);
-      break;
-    }
-    case 'comboBreak': {
-      playTone(320, 0.12, 'sawtooth', 0.08);
-      playTone(220, 0.14, 'triangle', 0.07, 0.08);
-      playTone(140, 0.18, 'sine', 0.06, 0.16);
       break;
     }
   }

@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import type { CSSProperties } from 'react';
 import { formatComboLabel, getComboTheme } from '../game/combo';
 import { getLiveScore } from '../game/scoring';
 import type { GameState } from '../game/types';
@@ -13,6 +14,12 @@ interface HUDProps {
 export function HUD({ state, totalScore, onOpenScoreboard }: HUDProps) {
   const score = getLiveScore(state.comboScore);
   const comboTheme = state.combo >= 2 ? getComboTheme(state.combo) : null;
+  const comboStyle = comboTheme
+    ? ({
+        '--hud-combo-text': comboTheme.label,
+        '--hud-combo-glow': comboTheme.glow,
+      } as CSSProperties)
+    : undefined;
 
   return (
     <header className="hud">
@@ -27,14 +34,11 @@ export function HUD({ state, totalScore, onOpenScoreboard }: HUDProps) {
         <div className="hud__score-wrap">
           <span className="hud__score">{score}</span>
           <AnimatePresence>
-            {state.combo >= 2 && comboTheme && (
+            {state.combo >= 2 && (
               <motion.span
                 key={state.combo}
                 className="hud__combo"
-                style={{
-                  color: comboTheme.label,
-                  textShadow: `0 0 10px rgba(${comboTheme.glow}, 0.65)`,
-                }}
+                style={comboStyle}
                 initial={{ scale: 0.6, opacity: 0, y: 6 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.8, opacity: 0 }}

@@ -45,7 +45,6 @@ const BASE_MOVE_PENALTY = 5;
 const BASE_TIME_PENALTY = 2;
 const MAX_PENALTY_RATIO = 0.25;
 
-/** Scale move + time penalties so combined cut stays within gross score budget */
 function applyPenaltyCap(
   grossScore: number,
   movePenalty: number,
@@ -56,13 +55,8 @@ function applyPenaltyCap(
   const maxTotal = Math.round(grossScore * MAX_PENALTY_RATIO);
   const rawTotal = movePenalty + timePenalty;
 
-  if (rawTotal <= maxTotal) {
-    return { movePenalty, timePenalty };
-  }
-
-  if (rawTotal <= 0) {
-    return { movePenalty: 0, timePenalty: 0 };
-  }
+  if (rawTotal <= maxTotal) return { movePenalty, timePenalty };
+  if (rawTotal <= 0) return { movePenalty: 0, timePenalty: 0 };
 
   const scale = maxTotal / rawTotal;
   let cappedMove = Math.round(movePenalty * scale);

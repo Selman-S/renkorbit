@@ -18,7 +18,6 @@ export interface ComboTheme {
   glow: string;
 }
 
-/** Visual theme escalates with each combo tier */
 export function getComboTheme(combo: number): ComboTheme {
   const level = Math.min(Math.max(combo, 2), MAX_COMBO);
 
@@ -75,9 +74,7 @@ export interface ComboUpdate {
   maxCombo: number;
   tubeScores: TubeScores;
   newCompletions: number;
-  /** Combo levels earned this move — drives burst FX */
   comboPops: number[];
-  /** Lost streak levels when a scored tube breaks */
   comboBreaks: number[];
 }
 
@@ -112,7 +109,6 @@ export function applyMoveCombo(
   const tubeScores = { ...currentTubeScores };
   const comboBreaks: number[] = [];
 
-  // Break scored tubes first — remove the points they previously earned
   if (broken.length > 0) {
     for (const index of broken) {
       const earned = tubeScores[index] ?? 0;
