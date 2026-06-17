@@ -1,3 +1,123 @@
+.profile__username {
+  margin: 0 12px 12px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.profile__username-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.profile__username-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.profile__username-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.profile__username-value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #fff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.profile__username-edit {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid rgba(76, 201, 240, 0.35);
+  border-radius: 10px;
+  background: rgba(76, 201, 240, 0.12);
+  color: #9ee8ff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profile__username-edit:active {
+  transform: scale(0.98);
+}
+
+.profile__username-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile__username-input {
+  width: 100%;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.profile__username-input:focus {
+  outline: none;
+  border-color: rgba(76, 201, 240, 0.6);
+  box-shadow: 0 0 0 2px rgba(76, 201, 240, 0.2);
+}
+
+.profile__username-error {
+  margin: 0;
+  font-size: 0.68rem;
+  color: #ff8a8a;
+}
+
+.profile__username-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.profile__username-cancel,
+.profile__username-save {
+  flex: 1;
+  min-height: 40px;
+  border-radius: 12px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.profile__username-cancel {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-muted);
+}
+
+.profile__username-save {
+  border: none;
+  background: var(--btn-play);
+  color: #fff;
+  box-shadow: var(--btn-play-shadow);
+}
+
+.profile__username-cancel:disabled,
+.profile__username-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .profile__grid {
   list-style: none;
   margin: 0;

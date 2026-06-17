@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { motion } from 'framer-motion';
-import { saveUsername } from '../game/storage';
+import { saveUsername, validateUsername } from '../game/storage';
 import './UsernamePrompt.css';
 
 interface UsernamePromptProps {
@@ -13,12 +13,12 @@ export function UsernamePrompt({ onComplete }: UsernamePromptProps) {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    const trimmed = name.trim();
-    if (trimmed.length < 2) {
-      setError('En az 2 karakter gir');
+    const validationError = validateUsername(name);
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    onComplete(saveUsername(trimmed));
+    onComplete(saveUsername(name.trim()));
   };
 
   return (

@@ -105,8 +105,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.win-modal__row--penalty strong {
-  color: #ff8a8a;
+.win-modal__row--bonus strong {
+  color: #7dffb8;
 }
 
 .win-modal__row--total {

@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test:layout": "node scripts/test-layout.mjs",
+    "report:bonus": "node scripts/bonus-curves-report.mjs",
     "generate:icons": "sh scripts/generate-pwa-icons.sh",
     "reset:leaderboard": "node scripts/reset-leaderboard.mjs"
   },

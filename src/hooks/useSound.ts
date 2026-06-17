@@ -76,7 +76,7 @@ function playEventSound(event: SoundEvent, comboLevel = 1) {
       playTone(165, 0.16, 'sawtooth', 0.04, 0.06);
       break;
     case 'combo': {
-      const level = Math.min(Math.max(comboLevel, 1), 5);
+      const level = Math.max(comboLevel, 1);
       const base = 360 + level * 95;
       playTone(base, 0.09, 'sine', 0.1);
       playTone(base * 1.28, 0.11, 'triangle', 0.08, 0.05);

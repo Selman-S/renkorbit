@@ -2,7 +2,16 @@ const TUTORIAL_KEY = 'renkorbit_tutorial_done';
 const SOUND_MUTED_KEY = 'renkorbit_sound_muted';
 const USERNAME_KEY = 'renkorbit_username';
 const PLAYER_ID_KEY = 'renkorbit_player_id';
-const MAX_USERNAME_LEN = 16;
+export const MAX_USERNAME_LEN = 16;
+export const MIN_USERNAME_LEN = 2;
+
+/** Return validation error message, or null when valid */
+export function validateUsername(name: string): string | null {
+  const trimmed = name.trim();
+  if (trimmed.length < MIN_USERNAME_LEN) return 'En az 2 karakter gir';
+  if (trimmed.length > MAX_USERNAME_LEN) return `En fazla ${MAX_USERNAME_LEN} karakter`;
+  return null;
+}
 
 /** Stable anonymous id for cloud leaderboard rows */
 export function loadPlayerId(): string {

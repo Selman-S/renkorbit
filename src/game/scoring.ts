@@ -1,5 +1,8 @@
 import { checkWin } from './gameLogic';
+import { getJourneyBonusTargets, type BonusTargets } from './journeyBonusTargets';
 import type { LevelConfig } from './levelConfig';
+import type { GameSettings } from './levelConfig';
+import { getStarThresholds } from './stars';
 import type { Column } from './types';
 
 export function formatTime(totalSec: number): string {
@@ -26,68 +29,64 @@ export function pointsPerCompletedTube(config: LevelConfig): number {
   return config.capacity * 20 * config.scoreMultiplier;
 }
 
-/** Live score — raw combo points; penalties apply only at win */
+/** Live score — raw combo points; bonuses apply only at win */
 export function getLiveScore(comboScore: number): number {
   return comboScore;
 }
 
+export const MOVE_BONUS_RATIO = 0.125;
+export const TIME_BONUS_RATIO = 0.125;
+
 export interface ScoreBreakdown {
   grossScore: number;
-  movePenalty: number;
-  timePenalty: number;
+  moveBonus: number;
+  timeBonus: number;
   finalScore: number;
   moves: number;
   elapsedSec: number;
-  stepMultiplier: number;
+  targets: BonusTargets;
 }
 
-const BASE_MOVE_PENALTY = 5;
-const BASE_TIME_PENALTY = 2;
-const MAX_PENALTY_RATIO = 0.25;
+/** Linear bonus — best at min, zero at max */
+export function calculatePerformanceBonus(
+  value: number,
+  min: number,
+  max: number,
+  maxBonus: number,
+): number {
+  if (maxBonus <= 0) return 0;
+  if (value <= min) return maxBonus;
+  if (value >= max) return 0;
+  if (max <= min) return value <= min ? maxBonus : 0;
 
-function applyPenaltyCap(
-  grossScore: number,
-  movePenalty: number,
-  timePenalty: number,
-): { movePenalty: number; timePenalty: number } {
-  if (grossScore <= 0) return { movePenalty: 0, timePenalty: 0 };
+  const ratio = (max - value) / (max - min);
+  return Math.round(maxBonus * ratio);
+}
 
-  const maxTotal = Math.round(grossScore * MAX_PENALTY_RATIO);
-  const rawTotal = movePenalty + timePenalty;
-
-  if (rawTotal <= maxTotal) return { movePenalty, timePenalty };
-  if (rawTotal <= 0) return { movePenalty: 0, timePenalty: 0 };
-
-  const scale = maxTotal / rawTotal;
-  let cappedMove = Math.round(movePenalty * scale);
-  let cappedTime = Math.round(timePenalty * scale);
-
-  if (cappedMove + cappedTime > maxTotal) {
-    cappedTime = Math.max(0, maxTotal - cappedMove);
+/** Fallback targets for shared / non-journey games */
+export function getBonusTargets(
+  config: LevelConfig,
+  journeyStep?: number | null,
+): BonusTargets {
+  if (journeyStep && journeyStep > 0) {
+    return getJourneyBonusTargets(journeyStep);
   }
 
-  return { movePenalty: cappedMove, timePenalty: cappedTime };
+  const settings: GameSettings = {
+    colors: config.colors,
+    layoutMode: config.layoutMode,
+    playMode: 'relaxed',
+  };
+  const stars = getStarThresholds(settings);
+  const minMoves = stars.three.maxMoves;
+  const maxMoves = Math.round(stars.two.maxMoves * 1.35);
+  const minTimeSec = Math.max(12, Math.round(config.colors * config.colors * 0.75));
+  const maxTimeSec = minTimeSec + Math.max(30, Math.round(minTimeSec * 2.5));
+
+  return { minMoves, maxMoves, minTimeSec, maxTimeSec };
 }
 
-/** Later journey steps apply harsher end penalties */
-export function getJourneyStepMultiplier(journeyStep?: number | null): number {
-  if (!journeyStep || journeyStep < 1) return 1;
-  return 1 + (journeyStep - 1) * 0.1;
-}
-
-function movePenaltyPerStep(config: LevelConfig, journeyStep?: number | null): number {
-  return Math.round(
-    BASE_MOVE_PENALTY * config.scoreMultiplier * getJourneyStepMultiplier(journeyStep),
-  );
-}
-
-function timePenaltyPerSec(config: LevelConfig, journeyStep?: number | null): number {
-  return Math.round(
-    BASE_TIME_PENALTY * config.scoreMultiplier * getJourneyStepMultiplier(journeyStep),
-  );
-}
-
-/** End-of-game score with move and hidden-time penalties */
+/** End-of-game score with move and time performance bonuses */
 export function calculateScoreBreakdown(
   comboScore: number,
   moves: number,
@@ -97,33 +96,42 @@ export function calculateScoreBreakdown(
   journeyStep?: number | null,
 ): ScoreBreakdown {
   const grossScore = comboScore;
-  const stepMultiplier = getJourneyStepMultiplier(journeyStep);
+  const targets = getBonusTargets(config, journeyStep);
 
   if (!checkWin(columns, config.capacity)) {
     return {
       grossScore,
-      movePenalty: 0,
-      timePenalty: 0,
+      moveBonus: 0,
+      timeBonus: 0,
       finalScore: grossScore,
       moves,
       elapsedSec,
-      stepMultiplier,
+      targets,
     };
   }
 
-  const rawMovePenalty = Math.round(moves * movePenaltyPerStep(config, journeyStep));
-  const rawTimePenalty = Math.round(elapsedSec * timePenaltyPerSec(config, journeyStep));
-  const { movePenalty, timePenalty } = applyPenaltyCap(grossScore, rawMovePenalty, rawTimePenalty);
-  const finalScore = Math.max(0, grossScore - movePenalty - timePenalty);
+  const moveBonus = calculatePerformanceBonus(
+    moves,
+    targets.minMoves,
+    targets.maxMoves,
+    Math.round(grossScore * MOVE_BONUS_RATIO),
+  );
+  const timeBonus = calculatePerformanceBonus(
+    elapsedSec,
+    targets.minTimeSec,
+    targets.maxTimeSec,
+    Math.round(grossScore * TIME_BONUS_RATIO),
+  );
+  const finalScore = grossScore + moveBonus + timeBonus;
 
   return {
     grossScore,
-    movePenalty,
-    timePenalty,
+    moveBonus,
+    timeBonus,
     finalScore,
     moves,
     elapsedSec,
-    stepMultiplier,
+    targets,
   };
 }
 

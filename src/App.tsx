@@ -361,6 +361,10 @@ function App() {
             setProfileRefreshKey((n) => n + 1);
             setShowProfile(true);
           }}
+          onUsernameChange={() => {
+            setScoreRefreshKey((n) => n + 1);
+            setProfileRefreshKey((n) => n + 1);
+          }}
           showShop={showShop}
           onCloseShop={() => setShowShop(false)}
           onOpenShop={() => setShowShop(true)}
@@ -372,6 +376,7 @@ function App() {
           showStatistics={showStatistics}
           onCloseStatistics={() => setShowStatistics(false)}
           onOpenStatistics={() => setShowStatistics(true)}
+          onShareToast={showShareToast}
         />
       ) : (
         <div className="app__game">

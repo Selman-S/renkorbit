@@ -16,6 +16,7 @@ import { Profile } from './Profile';
 import { Scoreboard } from './Scoreboard';
 import { Shop } from './Shop';
 import { Statistics } from './Statistics';
+import { ShareGameSheet } from './ShareGameSheet';
 import { StarRow } from './StarRow';
 import './LevelSelect.css';
 
@@ -37,6 +38,8 @@ interface LevelSelectProps {
   onOpenProfile?: () => void;
   onOpenShop?: () => void;
   onOpenStatistics?: () => void;
+  onUsernameChange?: (name: string) => void;
+  onShareToast?: (message: string) => void;
 }
 
 export function LevelSelect({
@@ -57,12 +60,15 @@ export function LevelSelect({
   onOpenProfile,
   onOpenShop,
   onOpenStatistics,
+  onUsernameChange,
+  onShareToast,
 }: LevelSelectProps) {
   void journeyRefreshKey;
   void profileRefreshKey;
   void scoreRefreshKey;
 
   const [showInstall, setShowInstall] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [showContinueCta, setShowContinueCta] = useState(false);
   const currentStepRef = useRef<HTMLLIElement | null>(null);
   const { canInstall, isIos, hasNativePrompt, promptInstall } = usePwaInstall();
@@ -243,14 +249,28 @@ export function LevelSelect({
               📈 İstatistik
             </button>
           )}
+          <button
+            type="button"
+            className="level-select__scores-btn"
+            onClick={() => setShowShare(true)}
+          >
+            🔗 Paylaş
+          </button>
         </div>
       </footer>
+
+      <ShareGameSheet
+        open={showShare}
+        onClose={() => setShowShare(false)}
+        onFeedback={onShareToast}
+      />
 
       {onCloseProfile && (
         <Profile
           open={showProfile}
           onClose={onCloseProfile}
           refreshKey={profileRefreshKey}
+          onUsernameChange={onUsernameChange}
         />
       )}
       {onCloseShop && (

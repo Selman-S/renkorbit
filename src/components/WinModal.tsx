@@ -92,16 +92,21 @@ export function WinModal({
                 <span>Brüt puan</span>
                 <strong>{breakdown.grossScore}</strong>
               </div>
-              {breakdown.movePenalty > 0 && (
-                <div className="win-modal__row win-modal__row--penalty">
-                  <span>Hamle cezası ({breakdown.moves})</span>
-                  <strong>−{breakdown.movePenalty}</strong>
+              {breakdown.moveBonus > 0 && (
+                <div className="win-modal__row win-modal__row--bonus">
+                  <span>
+                    Hamle bonusu ({breakdown.moves} / ≤{breakdown.targets.minMoves})
+                  </span>
+                  <strong>+{breakdown.moveBonus}</strong>
                 </div>
               )}
-              {breakdown.timePenalty > 0 && (
-                <div className="win-modal__row win-modal__row--penalty">
-                  <span>Süre cezası ({formatTime(breakdown.elapsedSec)})</span>
-                  <strong>−{breakdown.timePenalty}</strong>
+              {breakdown.timeBonus > 0 && (
+                <div className="win-modal__row win-modal__row--bonus">
+                  <span>
+                    Süre bonusu ({formatTime(breakdown.elapsedSec)} / ≤
+                    {formatTime(breakdown.targets.minTimeSec)})
+                  </span>
+                  <strong>+{breakdown.timeBonus}</strong>
                 </div>
               )}
               <div className="win-modal__row win-modal__row--total">
