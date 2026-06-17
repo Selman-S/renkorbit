@@ -5,6 +5,7 @@ import {
   isAchievementUnlocked,
 } from '../game/achievements';
 import { getCompletedCount, PROGRESSION_STEPS } from '../game/progressionMap';
+import { getNextRank, getPlayerRank, PLAYER_RANKS } from '../game/ranks';
 import { loadCoins } from '../game/coins';
 import { syncLeaderboardScore } from '../game/leaderboardApi';
 import { loadTotalScore } from '../game/scoring';
@@ -15,6 +16,7 @@ import {
   validateUsername,
 } from '../game/storage';
 import { ModalCard } from './ModalCard';
+import { RankBadge } from './RankBadge';
 import './Profile.css';
 
 interface ProfileProps {
@@ -40,6 +42,8 @@ export function Profile({
   const total = ACHIEVEMENTS.length;
   const coins = loadCoins();
   const stepsDone = getCompletedCount();
+  const rank = getPlayerRank();
+  const nextRank = getNextRank(rank);
 
   // Reload display name when profile opens or parent refreshes
   useEffect(() => {
@@ -155,6 +159,29 @@ export function Profile({
             </div>
           </form>
         )}
+      </section>
+
+      <section className="profile__rank" aria-label="Rütbe">
+        <RankBadge rank={rank} size="lg" showTagline />
+        {nextRank && (
+          <p className="profile__rank-next">
+            Sonraki: {nextRank.emoji} {nextRank.title} — {nextRank.minSteps} adım
+          </p>
+        )}
+        <ul className="profile__rank-ladder" aria-label="Rütbe basamakları">
+          {PLAYER_RANKS.map((step) => {
+            const earned = stepsDone >= step.minSteps;
+            return (
+              <li
+                key={step.id}
+                className={`profile__rank-step ${earned ? 'profile__rank-step--earned' : ''}`}
+              >
+                <span aria-hidden>{step.emoji}</span>
+                <span>{step.title}</span>
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <ul className="profile__grid">

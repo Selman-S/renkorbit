@@ -11,7 +11,9 @@ import {
   PROGRESSION_STEPS,
 } from '../game/progressionMap';
 import { usePwaInstall } from '../hooks/usePwaInstall';
+import { getPlayerRank } from '../game/ranks';
 import { InstallAppModal } from './InstallAppModal';
+import { RankBadge } from './RankBadge';
 import { Profile } from './Profile';
 import { Scoreboard } from './Scoreboard';
 import { Shop } from './Shop';
@@ -64,6 +66,8 @@ export function LevelSelect({
   onShareToast,
 }: LevelSelectProps) {
   void journeyRefreshKey;
+
+  const playerRank = getPlayerRank();
   void profileRefreshKey;
   void scoreRefreshKey;
 
@@ -132,6 +136,9 @@ export function LevelSelect({
         </div>
         <h1 className="level-select__title">RenkOrbit</h1>
         <p className="level-select__tagline">Galaksi yolculuğuna devam et</p>
+        <div className="level-select__rank-wrap">
+          <RankBadge rank={playerRank} size="sm" />
+        </div>
         <p className="level-select__coins">
           <span aria-hidden>🪙</span> {coins} · 🏅 {badges}/{ACHIEVEMENTS.length} · {completed}/
           {PROGRESSION_STEPS.length} adım

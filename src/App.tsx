@@ -9,6 +9,7 @@ import { TutorialOverlay } from './components/TutorialOverlay';
 import { TimeUpModal } from './components/TimeUpModal';
 import { ComboBurstLayer, type ComboBurstItem } from './components/ComboBurst';
 import { ShareToast } from './components/ShareToast';
+import { RankUpModal } from './components/RankUpModal';
 import { WinModal } from './components/WinModal';
 import { DEFAULT_SETTINGS } from './game/levelConfig';
 import { checkAchievements, getAchievementById } from './game/achievements';
@@ -46,6 +47,7 @@ import {
 } from './game/stars';
 import { useGame } from './hooks/useGame';
 import { useSound } from './hooks/useSound';
+import { checkRankPromotion, migratePlayerRank, type PlayerRank } from './game/ranks';
 import './styles/global.css';
 import './App.css';
 
@@ -71,6 +73,7 @@ function App() {
   const [scoreRefreshKey, setScoreRefreshKey] = useState(0);
   const [comboBursts, setComboBursts] = useState<ComboBurstItem[]>([]);
   const [shareToast, setShareToast] = useState<string | null>(null);
+  const [promotedRank, setPromotedRank] = useState<PlayerRank | null>(null);
 
   const { state, moveBalls, canDrop, undo, newGame, setGame, clearComboPops, clearComboBreaks } =
     useGame(activeSettings);
@@ -121,6 +124,8 @@ function App() {
     if (state.isJourney && state.journeyStep !== null) {
       saveJourneyWin(state.journeyStep, stars);
       setJourneyRefreshKey((n) => n + 1);
+      const newRank = checkRankPromotion();
+      if (newRank) setPromotedRank(newRank);
     }
 
     addScoreHistoryEntry({
@@ -264,6 +269,11 @@ function App() {
     },
     [setGame, unlock, showShareToast],
   );
+
+  useEffect(() => {
+    if (!usernameReady) return;
+    migratePlayerRank();
+  }, [usernameReady]);
 
   useEffect(() => {
     if (!usernameReady || shareLaunched.current) return;
@@ -437,6 +447,7 @@ function App() {
         </div>
       )}
       <ShareToast message={shareToast} />
+      <RankUpModal rank={promotedRank} onClose={() => setPromotedRank(null)} />
     </div>
   );
 }

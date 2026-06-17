@@ -6,6 +6,126 @@
   text-align: center;
 }
 
+.scoreboard__subtitle {
+  margin: 2px 0 0;
+  font-size: 0.62rem;
+  color: var(--text-dim);
+}
+
+.scoreboard__player-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 12px 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(76, 201, 240, 0.35);
+  background: rgba(76, 201, 240, 0.1);
+}
+
+.scoreboard__player-card-emoji {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.scoreboard__player-card-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.scoreboard__player-card-text strong {
+  font-size: 0.78rem;
+  color: #fff;
+}
+
+.scoreboard__player-card-text span {
+  font-size: 0.65rem;
+  color: var(--accent-cyan);
+  font-weight: 700;
+}
+
+.scoreboard__promo {
+  margin: 0 12px 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+  color: #ffe9a8;
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  line-height: 1.4;
+}
+
+.scoreboard__tabs {
+  display: flex;
+  gap: 6px;
+  padding: 0 12px 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.scoreboard__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.scoreboard__tab {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  color: var(--text-muted);
+  font-size: 0.65rem;
+  font-weight: 800;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.scoreboard__tab--active {
+  color: #fff;
+  border-color: rgba(76, 201, 240, 0.45);
+  background: rgba(76, 201, 240, 0.15);
+}
+
+.scoreboard__tab--yours:not(.scoreboard__tab--active) {
+  border-color: rgba(255, 229, 102, 0.35);
+}
+
+.scoreboard__tab--gold.scoreboard__tab--active {
+  border-color: rgba(255, 215, 0, 0.5);
+  background: rgba(255, 215, 0, 0.12);
+}
+
+.scoreboard__tab--silver.scoreboard__tab--active {
+  border-color: rgba(192, 192, 210, 0.5);
+  background: rgba(192, 192, 210, 0.12);
+}
+
+.scoreboard__tab--bronze.scoreboard__tab--active {
+  border-color: rgba(205, 127, 50, 0.5);
+  background: rgba(205, 127, 50, 0.12);
+}
+
+.scoreboard__tab-label {
+  white-space: nowrap;
+}
+
+.scoreboard__range {
+  margin: 0 12px 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  text-align: center;
+}
+
 .scoreboard__list {
   list-style: none;
   margin: 0;
@@ -69,6 +189,15 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
+}
+
+.scoreboard__global {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--text-dim);
 }
 
 .scoreboard__you {

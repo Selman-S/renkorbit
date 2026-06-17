@@ -265,6 +265,12 @@
   font-size: 0.78rem;
 }
 
+.level-select__rank-wrap {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
 .level-select__coins {
   margin: 4px 0 0;
   font-size: 0.78rem;
