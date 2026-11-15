@@ -26,6 +26,15 @@ export function loadPlayerId(): string {
   }
 }
 
+/** Adopt the Supabase anonymous auth id so RLS ownership matches */
+export function savePlayerId(id: string): void {
+  try {
+    localStorage.setItem(PLAYER_ID_KEY, id);
+  } catch {
+    /* private mode — id stays session-only */
+  }
+}
+
 export function loadUsername(): string | null {
   try {
     const raw = localStorage.getItem(USERNAME_KEY);

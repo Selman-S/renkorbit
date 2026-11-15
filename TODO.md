@@ -104,7 +104,8 @@
 ## Kalan (bilinen)
 
 ### Sonrası
-- [ ] Supabase RLS sıkılaştırma (`signInAnonymously` + `auth.uid()`) — `leaderboard` hâlâ herkese yazılabilir
+- [x] RLS sıkılaştırma — istemci: anonim oturum + `player_id = auth.uid()`, açılışta satırı yeniden kaydeder; SQL: `supabase/secure-rls.sql` (sahip yazar, silme yok, puan tavanı)
+- [ ] Supabase'de **Anonymous sign-ins** aç → istemciyi yayınla → `secure-rls.sql` çalıştır (kullanıcı adımı; 16 Kasım'da anonim giriş kapalı)
 - [ ] Haftalık lig sezonları (ayrı karar)
 
 ### Polish

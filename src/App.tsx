@@ -518,7 +518,9 @@ function App() {
   useEffect(() => {
     if (!usernameReady) return;
     migratePlayerRank();
-    if (migration.scoringReset) void syncLeaderboardScore(0);
+    // Re-register every session: keeps the online row on the anonymous auth
+    // id (RLS owner) and restores rows wiped by supabase/secure-rls.sql
+    void syncLeaderboardScore(loadTotalScore());
 
     const notices: string[] = [];
     if (migration.scoringReset) {

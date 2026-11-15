@@ -40,7 +40,7 @@ React 19, TypeScript 6, Vite 8, framer-motion. Online liderlik tablosu için Sup
   - `storage.ts`: kullanıcı adı, player id, tutorial ve ses ayarı
 - `src/hooks/`: `useGame`, `useBoardLayout`, `useSound`, `usePwaInstall`
 - `src/lib/supabase.ts`: Supabase istemcisi. Env yoksa `null` döner.
-- `supabase/`: `schema.sql`, `daily_scores.sql`, `reset-leaderboard.sql`
+- `supabase/`: `schema.sql`, `daily_scores.sql`, `secure-rls.sql`, `reset-leaderboard.sql`
 - `docs/`: FEATURES, ROADMAP, SUPABASE, MOBILE_TEST, PWA_INSTALL. `TODO.md` ve `todos/` görev takibi.
 
 ## Oyun kuralları (değiştirirken dikkat)
@@ -70,7 +70,7 @@ React 19, TypeScript 6, Vite 8, framer-motion. Online liderlik tablosu için Sup
 - `src/game/migrations.ts` tek seferlik migrasyonları tutar (`runStorageMigrations`, App'te lazy `useState` ile ilk render'dan önce çalışır). Puan formülünü değiştirirsen `SCORING_VERSION`'ı artır.
 - Ses `useSound.play(event, level)` ile; `level` olaya göre yığın yüksekliği / combo seviyesi / yıldız indeksi. Haptik `src/lib/haptics.ts`, mute'tan bağımsız.
 - `localStorage` erişimi her zaman `try/catch` içindedir (gizli mod, kota). Yeni okuma/yazma kodunda aynısını yap.
-- Liderlik tablosu anonim `player_id` (UUID) kullanır, giriş sistemi yok. Tablo adı `leaderboard`, kolonlar `player_id`, `username`, `total_score`.
+- Liderlik tablosu anonim `player_id` (UUID) kullanır, kullanıcıya görünen giriş sistemi yok. Tablo adı `leaderboard`, kolonlar `player_id`, `username`, `total_score`. Online yazmalar `resolveOnlinePlayerId()` (`onlineIdentity.ts`) ile Supabase anonim oturumunun `auth.uid()`'ini kullanır ve bunu `renkorbit_player_id`'ye yazar; `supabase/secure-rls.sql` sadece `player_id = auth.uid()` yazmaya izin verir. Anonim giriş kapalıysa eski cihaz UUID'sine düşer. Yazma yapan yeni kodda `loadPlayerId()` değil `resolveOnlinePlayerId()` kullan. İstemciye silme politikası ekleme.
 - Supabase için `.env` içinde `VITE_SUPABASE_URL` ve `VITE_SUPABASE_ANON_KEY` gerekir (`.env.example`'a bak). Tanımlı değilse oyun yerel modda çalışır, `isSupabaseConfigured()` ile kontrol edilir. `.env` dosyasını commit etme.
 
 ## Tutarlılık notları

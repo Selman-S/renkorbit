@@ -2,6 +2,7 @@ import { getSupabase, isSupabaseConfigured } from '../lib/supabase';
 import type { DailyResult } from './daily';
 import type { LeaderboardEntry } from './leaderboard';
 import { loadPlayerId, loadUsername } from './storage';
+import { resolveOnlinePlayerId } from './onlineIdentity';
 
 const TABLE = 'daily_scores';
 const BOARD_SIZE = 50;
@@ -46,9 +47,10 @@ export async function submitDailyScore(day: string, result: DailyResult): Promis
   const username = loadUsername();
   if (!supabase || !username) return 'offline';
 
+  const playerId = await resolveOnlinePlayerId();
   const { error } = await supabase.from(TABLE).insert({
     day,
-    player_id: loadPlayerId(),
+    player_id: playerId,
     username,
     score: Math.max(0, Math.round(result.score)),
     moves: Math.max(1, Math.round(result.moves)),

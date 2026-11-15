@@ -23,7 +23,7 @@ if (!url || !key) {
   process.exit(1);
 }
 
-const supabase = createClient(url, key);
+const supabase = createClient(url, key, { auth: { persistSession: false } });
 
 const read = await supabase.from('leaderboard').select('player_id, username, total_score').limit(5);
 if (read.error) {
@@ -32,22 +32,36 @@ if (read.error) {
 }
 console.log('OK read:', read.data?.length ?? 0, 'rows');
 
-const testId = crypto.randomUUID();
-const upsert = await supabase.from('leaderboard').upsert(
-  {
-    player_id: testId,
-    username: '_test',
-    total_score: 1,
-    updated_at: new Date().toISOString(),
-  },
-  { onConflict: 'player_id' },
-);
-if (upsert.error) {
-  console.error('FAIL write:', upsert.error.message);
+const auth = await supabase.auth.signInAnonymously();
+if (auth.error || !auth.data.user) {
+  console.error('FAIL anonymous sign-in:', auth.error?.message ?? 'no user');
+  console.error('Enable Authentication → Sign In / Providers → Anonymous sign-ins.');
   process.exit(1);
 }
-console.log('OK write: test row inserted');
+const uid = auth.data.user.id;
+console.log('OK anonymous sign-in');
 
-await supabase.from('leaderboard').delete().eq('player_id', testId);
-console.log('OK cleanup: test row removed');
+// Own row with score 0 — hidden from the board (it lists total_score > 0)
+const own = await supabase
+  .from('leaderboard')
+  .upsert(
+    { player_id: uid, username: '_test', total_score: 0, updated_at: new Date().toISOString() },
+    { onConflict: 'player_id' },
+  );
+if (own.error) {
+  console.error('FAIL own write:', own.error.message);
+  process.exit(1);
+}
+console.log('OK own write');
+
+// Someone else's id must be rejected once supabase/secure-rls.sql is applied
+const foreign = await supabase
+  .from('leaderboard')
+  .insert({ player_id: crypto.randomUUID(), username: '_test', total_score: 0 });
+if (foreign.error) {
+  console.log('OK foreign write rejected (RLS secured)');
+} else {
+  console.log('WARN foreign write accepted — run supabase/secure-rls.sql');
+}
+
 console.log('Supabase leaderboard ready.');

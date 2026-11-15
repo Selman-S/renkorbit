@@ -10,6 +10,7 @@ import {
 } from './leagues';
 import { loadPlayerId, loadUsername } from './storage';
 import { loadTotalScore } from './scoring';
+import { resolveOnlinePlayerId } from './onlineIdentity';
 
 export interface LeaderboardRow {
   player_id: string;
@@ -135,9 +136,10 @@ export async function syncLeaderboardScore(totalScore: number): Promise<void> {
   if (!supabase || !username) return;
 
   const safeScore = Math.max(0, Math.round(totalScore));
+  const playerId = await resolveOnlinePlayerId();
   await supabase.from(TABLE).upsert(
     {
-      player_id: loadPlayerId(),
+      player_id: playerId,
       username,
       total_score: safeScore,
       updated_at: new Date().toISOString(),

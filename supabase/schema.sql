@@ -12,23 +12,14 @@ create index if not exists leaderboard_score_idx
 
 alter table public.leaderboard enable row level security;
 
--- Small friend-group game: anon clients may read and upsert scores
+-- Everyone reads; writes only to your own row. Clients sign in with
+-- Supabase anonymous auth and use auth.uid() as player_id, so enable
+-- Authentication → Sign In / Providers → "Anonymous sign-ins".
 create policy "leaderboard_public_read"
   on public.leaderboard for select
   using (true);
 
-create policy "leaderboard_public_insert"
-  on public.leaderboard for insert
-  with check (true);
-
-create policy "leaderboard_public_update"
-  on public.leaderboard for update
-  using (true)
-  with check (true);
-
--- Optional: allows scripts/reset-leaderboard.mjs to wipe rows via anon key
-create policy "leaderboard_public_delete"
-  on public.leaderboard for delete
-  using (true);
+-- Owner-only insert/update, score cap and daily policy:
+-- run supabase/secure-rls.sql after this file.
 
 -- Daily puzzle board: see supabase/daily_scores.sql
