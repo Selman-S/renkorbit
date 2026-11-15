@@ -4,6 +4,7 @@ import {
   getJourneySeed,
   getJourneySettings,
   getJourneyStepId,
+  getJourneyUndoLimit,
 } from './progressionMap';
 import { canMove, checkWin, cloneColumns, moveBalls } from './gameLogic';
 import {
@@ -44,6 +45,7 @@ function buildInitialState(
     playSettings.playMode === 'timed' ? getTimeLimitSec(playSettings.colors) : null;
 
   const gameKey = isJourney ? getJourneyStepId(journeyStep) : getGameKey(playSettings);
+  const undoLimit = isJourney ? getJourneyUndoLimit(journeyStep) : null;
 
   return {
     settings: playSettings,
@@ -54,11 +56,15 @@ function buildInitialState(
     columns: puzzle.columns,
     moves: 0,
     combo: 0,
+    comboWindow: 0,
     comboScore: 0,
     maxCombo: 0,
     tubeScores: {},
     comboPops: [],
     comboBreaks: [],
+    tubeCompletions: [],
+    undoLimit,
+    undosUsed: 0,
     elapsedSec: 0,
     timeLimitSec,
     status: 'playing',
@@ -78,6 +84,12 @@ function bootOptionsFromState(state: GameState): BootOptions {
   };
 }
 
+export function canUndo(state: GameState): boolean {
+  if (state.history.length === 0 || state.status !== 'playing') return false;
+  if (state.undoLimit !== null && state.undosUsed >= state.undoLimit) return false;
+  return true;
+}
+
 export function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'SET_GAME':
@@ -88,7 +100,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'NEW_GAME':
       return buildInitialState(state.settings, action.seed ?? state.seed, bootOptionsFromState(state));
 
-    case 'TICK':
+    case 'TICK': {
       if (state.status !== 'playing') return state;
       const elapsedSec = state.elapsedSec + 1;
       if (
@@ -99,6 +111,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         return { ...state, elapsedSec, status: 'lost' };
       }
       return { ...state, elapsedSec };
+    }
 
     case 'CLEAR_SHAKE':
       return { ...state, invalidShake: null };
@@ -108,6 +121,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'CLEAR_COMBO_BREAKS':
       return { ...state, comboBreaks: [] };
+
+    case 'CLEAR_TUBE_COMPLETIONS':
+      return { ...state, tubeCompletions: [] };
 
     case 'MOVE': {
       if (state.status !== 'playing') return state;
@@ -128,11 +144,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         state.comboScore,
         state.maxCombo,
         state.tubeScores,
+        state.comboWindow,
       );
 
       const snapshot = {
         columns: cloneColumns(prevColumns),
         combo: state.combo,
+        comboWindow: state.comboWindow,
         comboScore: state.comboScore,
         maxCombo: state.maxCombo,
         tubeScores: { ...state.tubeScores },
@@ -143,11 +161,13 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         columns,
         moves: state.moves + 1,
         combo: comboUpdate.combo,
+        comboWindow: comboUpdate.comboWindow,
         comboScore: comboUpdate.comboScore,
         maxCombo: comboUpdate.maxCombo,
         tubeScores: comboUpdate.tubeScores,
         comboPops: comboUpdate.comboPops,
         comboBreaks: comboUpdate.comboBreaks,
+        tubeCompletions: comboUpdate.completedTubes,
         history: [...state.history, snapshot],
         status: checkWin(columns, state.config.capacity) ? 'won' : 'playing',
         invalidShake: null,
@@ -155,20 +175,23 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'UNDO': {
-      if (state.history.length === 0 || state.status === 'won') return state;
+      if (!canUndo(state)) return state;
       const history = [...state.history];
       const snapshot = history.pop()!;
       return {
         ...state,
         columns: snapshot.columns,
         combo: snapshot.combo,
+        comboWindow: snapshot.comboWindow,
         comboScore: snapshot.comboScore,
         maxCombo: snapshot.maxCombo,
         tubeScores: { ...snapshot.tubeScores },
         comboPops: [],
         comboBreaks: [],
+        tubeCompletions: [],
         history,
         moves: Math.max(0, state.moves - 1),
+        undosUsed: state.undosUsed + 1,
         status: 'playing',
       };
     }

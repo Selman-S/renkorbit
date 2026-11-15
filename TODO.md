@@ -48,18 +48,38 @@
 - [x] Orbit Coin + mağaza (top skin, tema)
 - [x] 12 başarım rozeti
 
-### Puanlama (güncel)
+### Puanlama v2 (Kasım 2026)
 - [x] Oyun sırasında brüt combo puanı
-- [x] Süre gizli sayılır; bitişte hamle + süre cezası (adım çarpanı)
-- [x] Kazanma ekranında puan kırılımı (brüt / cezalar / toplam)
-- [x] Tamamlanan sütun bozulunca puan geri düşer
+- [x] **Combo hamle penceresi:** tüp tamamlayınca `ceil(N/2)+1` (3–7) hamle içinde yeni tüp bitirmezsen zincir biter ("ZİNCİR BİTTİ", puan düşmez). Tamamlanmış tüpü bozmak hâlâ puan düşürür ("KIRILDI!")
+- [x] Combo çarpanı **×8'de tavan**; ×1 için patlama yok
+- [x] HUD'da kalan hamle pipleri + sayaçlı puan
+- [x] Süre gizli sayılır; bitişte hamle + süre **bonusu** (her biri brütün %12.5'ine kadar)
+- [x] Kazanma ekranı kademeli: yıldızlar (tık sesi) → puan sayacı → coin/rozet; yıldız hedefi gösterilir
+- [x] **Yıldız eşikleri** playtest optimumundan: 3★ ≤ ×1.15, 2★ ≤ ×1.6
+- [x] **Anti-farm:** tekrar oyunda toplam puana sadece rekor farkı, coin sadece rekorda (25 + 15×yeni yıldız)
+- [x] **Usta adımları:** 3 geri alma sınırı
+- [x] Puanlama v2 migrasyonu (`renkorbit_scoring_version`): best/total/history sıfırlanır, yolculuk + yıldızlar korunur
+
+### His (Kasım 2026)
+- [x] Geçersiz bırakma: top kaynağa geri uçar, tüp sallanır, ses + titreşim
+- [x] Tüp tamamlanınca renkli glow + "+puan" + çan sesi
+- [x] Haptik (navigator.vibrate) pick/drop/invalid/complete/combo/win
+- [x] Ses motoru: attack zarfı, master kompresör, yığın yüksekliğine göre pitch, combo pitch ×8'de durur
+- [x] Zamanlayıcı menü/overlay açıkken durur
 
 ---
 
 ## Kalan (bilinen)
 
+### Faz 2–4 (plan: günlük bulmaca + seri, sonsuz mod, coin harcama)
+- [ ] Günlük bulmaca (tarih seed) + seri sayacı + Supabase `daily_scores`
+- [ ] Sonsuz mod (rastgele seed, kademeli zorluk, koşu puanı)
+- [ ] Başarımlara coin ödülü, tüp skin / arka plan, günlük giriş
+- [ ] Supabase RLS sıkılaştırma (`signInAnonymously` + `auth.uid()`)
+
 ### Polish
 - [ ] Cross-tube top animasyonu (ball ID)
+- [ ] Lint: önceden kalan `react-hooks/set-state-in-effect` uyarıları (Profile, Scoreboard, TutorialOverlay, usePwaInstall, App kazanma efekti)
 
 ### v2 — Sosyal
 - [x] Puzzle paylaşım URL (seed + ayarlar)

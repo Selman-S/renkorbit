@@ -13,7 +13,8 @@ import { RankUpModal } from './components/RankUpModal';
 import { WinModal } from './components/WinModal';
 import { DEFAULT_SETTINGS } from './game/levelConfig';
 import { checkAchievements, getAchievementById } from './game/achievements';
-import { addCoins, calculateWinCoins } from './game/coins';
+import { addCoins, calculateReplayCoins, calculateWinCoins } from './game/coins';
+import { runStorageMigrations } from './game/migrations';
 import {
   getJourneySeed,
   getJourneySettings,
@@ -45,6 +46,7 @@ import {
   saveBestStars,
   type StarCount,
 } from './game/stars';
+import { canUndo } from './game/gameReducer';
 import { useGame } from './hooks/useGame';
 import { useSound } from './hooks/useSound';
 import { checkRankPromotion, migratePlayerRank, type PlayerRank } from './game/ranks';
@@ -54,6 +56,8 @@ import './App.css';
 type Screen = 'menu' | 'game';
 
 function App() {
+  // Runs once, before any render-time storage reads below
+  const [migration] = useState(runStorageMigrations);
   const [usernameReady, setUsernameReady] = useState(hasUsername);
   const [screen, setScreen] = useState<Screen>('menu');
   const [activeSettings, setActiveSettings] = useState(DEFAULT_SETTINGS);
@@ -66,6 +70,7 @@ function App() {
   const [showShop, setShowShop] = useState(false);
   const [cosmeticsTick, setCosmeticsTick] = useState(0);
   const [earnedCoins, setEarnedCoins] = useState(0);
+  const [earnedTotalCredit, setEarnedTotalCredit] = useState(0);
   const [journeyRefreshKey, setJourneyRefreshKey] = useState(0);
   const [showProfile, setShowProfile] = useState(false);
   const [profileRefreshKey, setProfileRefreshKey] = useState(0);
@@ -75,13 +80,17 @@ function App() {
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [promotedRank, setPromotedRank] = useState<PlayerRank | null>(null);
 
+  // Freeze the clock whenever the board isn't the thing on screen
+  const gamePaused =
+    screen !== 'game' || showTutorial || showScoreboard || showShop || showProfile || showStatistics;
+
   const { state, moveBalls, canDrop, undo, newGame, setGame, clearComboPops, clearComboBreaks } =
-    useGame(activeSettings);
+    useGame(activeSettings, { paused: gamePaused });
   const { play, muted, toggleMute, unlock } = useSound();
 
   const prevInvalidShake = useRef<number | null>(null);
-  const prevStatus = useRef(state.status);
   const winHandled = useRef(false);
+  const [winRevealed, setWinRevealed] = useState(false);
   const burstIdRef = useRef(0);
   const comboPopTimers = useRef<number[]>([]);
   const shareLaunched = useRef(false);
@@ -103,20 +112,29 @@ function App() {
       state.columns,
       state.journeyStep,
     );
-    const stars = calculateStars(state.moves, state.settings);
+    const stars = calculateStars(state.moves, state.settings, state.journeyStep);
+
+    // Read records before writing — replays only pay for the improvement
+    const prevBest = loadBestScore(state.gameKey);
+    const prevBestStars = loadBestStars(state.gameKey);
+    const isFirstClear = prevBest === null;
 
     const newRecord = saveBestScore(state.gameKey, {
       score,
       time: state.elapsedSec,
       moves: state.moves,
     });
-    const newTotal = addToTotalScore(score);
+    const totalCredit = isFirstClear ? score : Math.max(0, score - prevBest.score);
+    const newTotal = addToTotalScore(totalCredit);
     void syncLeaderboardScore(newTotal);
+    setEarnedTotalCredit(totalCredit);
 
     setEarnedStars(stars);
     setIsNewRecord(newRecord);
     setIsNewStars(saveBestStars(state.gameKey, stars));
-    const winCoins = calculateWinCoins(stars, score, state.maxCombo, newRecord);
+    const winCoins = isFirstClear
+      ? calculateWinCoins(stars, score, state.maxCombo, newRecord)
+      : calculateReplayCoins(newRecord, stars - prevBestStars);
     addCoins(winCoins);
     setEarnedCoins(winCoins);
     setCosmeticsTick((n) => n + 1);
@@ -176,11 +194,15 @@ function App() {
     prevInvalidShake.current = state.invalidShake;
   }, [state.invalidShake, play]);
 
+  // Let the final tube's chime and glow land before the modal takes over.
+  // winRevealed is reset by whoever starts a new board (see resetRoundUi).
   useEffect(() => {
-    if (prevStatus.current !== 'won' && state.status === 'won') {
+    if (state.status !== 'won') return;
+    const timer = window.setTimeout(() => {
       play('win');
-    }
-    prevStatus.current = state.status;
+      setWinRevealed(true);
+    }, 850);
+    return () => window.clearTimeout(timer);
   }, [state.status, play]);
 
   useEffect(() => {
@@ -195,9 +217,14 @@ function App() {
 
     pops.forEach((combo, index) => {
       const timer = window.setTimeout(() => {
-        play('combo', combo);
-        const id = burstIdRef.current++;
-        setComboBursts((prev) => [...prev, { id, kind: 'gain', combo }]);
+        if (combo >= 2) {
+          play('combo', combo);
+          const id = burstIdRef.current++;
+          setComboBursts((prev) => [...prev, { id, kind: 'gain', combo }]);
+        } else {
+          // First tube of a streak — the tube itself is the celebration
+          play('tubeComplete');
+        }
       }, index * 180);
       comboPopTimers.current.push(timer);
     });
@@ -209,11 +236,14 @@ function App() {
     const breaks = [...state.comboBreaks];
     clearComboBreaks();
 
-    breaks.forEach((combo, index) => {
+    breaks.forEach(({ combo, reason }, index) => {
       const timer = window.setTimeout(() => {
-        play('comboBreak', combo);
+        play(reason === 'broken' ? 'comboBreak' : 'comboExpire', combo);
         const id = burstIdRef.current++;
-        setComboBursts((prev) => [...prev, { id, kind: 'break', combo }]);
+        setComboBursts((prev) => [
+          ...prev,
+          { id, kind: reason === 'broken' ? 'break' : 'expire', combo },
+        ]);
       }, index * 120);
       comboPopTimers.current.push(timer);
     });
@@ -250,30 +280,49 @@ function App() {
     }
   }, [screen, state, showShareToast]);
 
+  /** Clear per-round win UI before a new board appears */
+  const resetRoundUi = useCallback(() => {
+    setIsNewRecord(false);
+    setIsNewStars(false);
+    setEarnedStars(0);
+    setEarnedCoins(0);
+    setEarnedTotalCredit(0);
+    setNewAchievements([]);
+    setComboBursts([]);
+    setWinRevealed(false);
+  }, []);
+
   const startSharedPuzzle = useCallback(
     (payload: SharedPuzzlePayload) => {
       unlock();
       setActiveSettings(payload.settings);
       setGame(payload.settings, payload.seed);
       setScreen('game');
-      setIsNewRecord(false);
-      setIsNewStars(false);
-      setEarnedStars(0);
-      setEarnedCoins(0);
-      setNewAchievements([]);
-      setComboBursts([]);
+      resetRoundUi();
       setShowTutorial(false);
       if (payload.sourceLabel) {
         showShareToast(`${payload.sourceLabel} — paylaşılan bulmaca`);
       }
     },
-    [setGame, unlock, showShareToast],
+    [setGame, unlock, showShareToast, resetRoundUi],
   );
+
+  const restartBoard = useCallback(() => {
+    resetRoundUi();
+    newGame();
+  }, [newGame, resetRoundUi]);
 
   useEffect(() => {
     if (!usernameReady) return;
     migratePlayerRank();
-  }, [usernameReady]);
+    if (!migration.scoringReset) return;
+    void syncLeaderboardScore(0);
+    const timer = window.setTimeout(
+      () => showShareToast('Puanlama yenilendi — puanlar sıfırlandı, yolculuk ilerlemen korundu'),
+      400,
+    );
+    return () => window.clearTimeout(timer);
+  }, [usernameReady, migration.scoringReset, showShareToast]);
 
   useEffect(() => {
     if (!usernameReady || shareLaunched.current) return;
@@ -298,15 +347,10 @@ function App() {
       setActiveSettings(settings);
       setGame(settings, seed, stepIndex);
       setScreen('game');
-      setIsNewRecord(false);
-      setIsNewStars(false);
-      setEarnedStars(0);
-      setEarnedCoins(0);
-      setNewAchievements([]);
-      setComboBursts([]);
+      resetRoundUi();
       setShowTutorial(stepIndex === 1 && !isTutorialDone());
     },
-    [setGame, unlock],
+    [setGame, unlock, resetRoundUi],
   );
 
   const completeTutorial = useCallback(() => {
@@ -403,36 +447,44 @@ function App() {
               disabled={state.status !== 'playing' || showTutorial}
               canDrop={canDrop}
               ballSkin={inventory.equippedBallSkin}
+              tubeScores={state.tubeScores}
+              celebrate={state.status === 'won'}
               onBallMove={moveBalls}
-              onPick={() => play('pick')}
-              onDrop={() => play('drop')}
+              onPick={(h) => play('pick', h)}
+              onDrop={(h) => play('drop', h)}
             />
             <WinModal
               state={state}
+              open={state.status === 'won' && winRevealed}
+              onStarReveal={(i) => play('star', i)}
               isNewRecord={isNewRecord}
               isNewStars={isNewStars}
               earnedStars={earnedStars}
               bestStars={bestStars}
               bestScore={bestScore}
               earnedCoins={earnedCoins}
+              earnedTotalCredit={earnedTotalCredit}
               showNextStep={showNextStep}
               onNextStep={startNextJourneyStep}
               newAchievements={newAchievements.map(
                 (id) => getAchievementById(id)?.title ?? id,
               )}
-              onPlayAgain={() => newGame()}
+              onPlayAgain={restartBoard}
               onMenu={goMenu}
               onShare={handleSharePuzzle}
             />
-            <TimeUpModal state={state} onRetry={() => newGame()} onMenu={goMenu} />
+            <TimeUpModal state={state} onRetry={restartBoard} onMenu={goMenu} />
             <TutorialOverlay open={showTutorial} onComplete={completeTutorial} />
             <ComboBurstLayer bursts={comboBursts} onDone={removeComboBurst} />
           </main>
           <GameControls
-            canUndo={state.history.length > 0 && state.status === 'playing'}
+            canUndo={canUndo(state)}
+            undoLeft={
+              state.undoLimit !== null ? Math.max(0, state.undoLimit - state.undosUsed) : null
+            }
             soundMuted={muted}
             onUndo={handleUndo}
-            onRestart={() => newGame()}
+            onRestart={restartBoard}
             onMenu={goMenu}
             onToggleSound={toggleMute}
             onShare={handleSharePuzzle}

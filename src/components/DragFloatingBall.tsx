@@ -4,6 +4,8 @@ import type { BallSkinId } from '../game/shop';
 import { Ball } from './Ball';
 import type { ColorId } from '../game/types';
 
+export type FloatingTransition = 'drop' | 'return';
+
 interface DragFloatingBallProps {
   colorId: ColorId;
   colorCount?: number;
@@ -11,13 +13,20 @@ interface DragFloatingBallProps {
   ballSkin?: BallSkinId;
   x: number;
   y: number;
-  dropping?: boolean;
+  /** When set, the ball tweens to target instead of following the pointer */
+  animating?: boolean;
+  transitionPreset?: FloatingTransition;
   targetX?: number;
   targetY?: number;
-  onDropComplete?: () => void;
+  onAnimationDone?: () => void;
 }
 
-// Floating ball — follows finger; drop uses tween animation
+const TRANSITIONS = {
+  drop: { type: 'tween' as const, duration: 0.28, ease: [0.34, 1.15, 0.64, 1] as [number, number, number, number] },
+  return: { type: 'tween' as const, duration: 0.22, ease: 'easeOut' as const },
+};
+
+// Floating ball — follows finger; drop/return use tween animation
 export function DragFloatingBall({
   colorId,
   colorCount = 12,
@@ -25,27 +34,24 @@ export function DragFloatingBall({
   ballSkin = 'classic',
   x,
   y,
-  dropping = false,
+  animating = false,
+  transitionPreset = 'drop',
   targetX,
   targetY,
-  onDropComplete,
+  onAnimationDone,
 }: DragFloatingBallProps) {
-  const left = (dropping && targetX !== undefined ? targetX : x) - size / 2;
-  const top = (dropping && targetY !== undefined ? targetY : y) - size / 2;
+  const left = (animating && targetX !== undefined ? targetX : x) - size / 2;
+  const top = (animating && targetY !== undefined ? targetY : y) - size / 2;
 
   return createPortal(
     <motion.div
       className="drag-floating-ball"
       style={{ width: size, height: size }}
       initial={false}
-      animate={{ left, top }}
-      transition={
-        dropping
-          ? { type: 'tween', duration: 0.28, ease: [0.34, 1.15, 0.64, 1] }
-          : { duration: 0 }
-      }
+      animate={{ left, top, scale: animating ? 1 : 1.08 }}
+      transition={animating ? TRANSITIONS[transitionPreset] : { duration: 0 }}
       onAnimationComplete={() => {
-        if (dropping) onDropComplete?.();
+        if (animating) onAnimationDone?.();
       }}
     >
       <Ball

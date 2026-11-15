@@ -1,3 +1,4 @@
+import { getBaselineMinMoves, getJourneyBonusTargets } from './journeyBonusTargets';
 import type { GameSettings } from './levelConfig';
 
 export type StarCount = 0 | 1 | 2 | 3;
@@ -7,28 +8,41 @@ export interface StarThresholds {
   two: { maxMoves: number };
 }
 
-/** Move targets scale with board size and layout difficulty */
-export function getStarThresholds(settings: GameSettings): StarThresholds {
-  const n = settings.colors;
-  const hard = settings.layoutMode === 'mixed' ? 1.55 : 1;
+/** Star limits as multiples of the playtest near-optimal move count */
+export const STAR_RATIO = { three: 1.15, two: 1.6 } as const;
 
+function baselineMoves(settings: GameSettings, journeyStep?: number | null): number {
+  if (journeyStep && journeyStep > 0) return getJourneyBonusTargets(journeyStep).minMoves;
+  return getBaselineMinMoves(settings.colors, settings.layoutMode === 'rows' ? 'rows' : 'mixed');
+}
+
+/** Move targets derived from the realistic optimum, not the board size */
+export function getStarThresholds(
+  settings: GameSettings,
+  journeyStep?: number | null,
+): StarThresholds {
+  const min = baselineMoves(settings, journeyStep);
   return {
-    three: { maxMoves: Math.round(n * (settings.layoutMode === 'rows' ? 4 : 6.5) * hard) },
-    two: { maxMoves: Math.round(n * (settings.layoutMode === 'rows' ? 6.5 : 10) * hard) },
+    three: { maxMoves: Math.round(min * STAR_RATIO.three) },
+    two: { maxMoves: Math.round(min * STAR_RATIO.two) },
   };
 }
 
-export function calculateStars(moves: number, settings: GameSettings): StarCount {
-  const t = getStarThresholds(settings);
+export function calculateStars(
+  moves: number,
+  settings: GameSettings,
+  journeyStep?: number | null,
+): StarCount {
+  const t = getStarThresholds(settings, journeyStep);
 
   if (moves <= t.three.maxMoves) return 3;
   if (moves <= t.two.maxMoves) return 2;
   return 1;
 }
 
-export function formatStarTarget(settings: GameSettings): string {
-  const t = getStarThresholds(settings);
-  return `3★ ≤${t.three.maxMoves} hamle`;
+export function formatStarTarget(settings: GameSettings, journeyStep?: number | null): string {
+  const t = getStarThresholds(settings, journeyStep);
+  return `3★ ≤${t.three.maxMoves} · 2★ ≤${t.two.maxMoves} hamle`;
 }
 
 const STARS_PREFIX = 'renkorbit_stars_';

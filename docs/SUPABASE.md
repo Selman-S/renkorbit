@@ -41,6 +41,7 @@ Oyuncu adı gir → galibiyet kazan → liderlik tablosunda görün.
 
 ## Notlar
 
+- **Puanlama v2 (Kasım 2026):** combo ve yıldız formülü değişti, istemci tarafı puanlar bir kez sıfırlanır. Deploy sonrası online tabloyu da eşitlemek için bir kez `npm run reset:leaderboard` çalıştır; istemciler ilk açılışta kendi satırını 0 ile günceller.
 - `.env` commit edilmez
 - Supabase yoksa tablo yerel skorla çalışır (çevrimdışı mod)
 - 20–30 oyuncu için free tier fazlasıyla yeterli

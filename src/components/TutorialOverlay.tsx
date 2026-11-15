@@ -10,7 +10,7 @@ const STEPS = [
   },
   {
     title: 'Boruya bırak',
-    body: 'Yeşil parlayan boruya bırak. Boş yer varsa her renk konulabilir.',
+    body: 'Parlayan boruya bırak. Boş yer varsa her renk konulabilir.',
     icon: '✨',
   },
   {

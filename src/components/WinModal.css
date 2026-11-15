@@ -65,6 +65,31 @@
   color: var(--accent-gold);
 }
 
+/* Star targets — the retry goal */
+.win-modal__star-target {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.74rem;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.win-modal__star-target--perfect {
+  color: #7dffb8;
+  font-weight: 600;
+}
+
+.win-modal__row--credit strong {
+  color: var(--accent-gold);
+}
+
+.win-modal__row--hint {
+  justify-content: center;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  font-style: italic;
+}
+
 .win-modal__badge {
   display: inline-block;
   background: linear-gradient(135deg, var(--accent-violet), var(--accent-magenta));

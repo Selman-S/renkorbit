@@ -1,8 +1,11 @@
 import { checkWin } from './gameLogic';
-import { getJourneyBonusTargets, type BonusTargets } from './journeyBonusTargets';
+import {
+  getFallbackBonusTargets,
+  getJourneyBonusTargets,
+  type BonusTargets,
+} from './journeyBonusTargets';
 import type { LevelConfig } from './levelConfig';
 import type { GameSettings } from './levelConfig';
-import { getStarThresholds } from './stars';
 import type { Column } from './types';
 
 export function formatTime(totalSec: number): string {
@@ -77,13 +80,7 @@ export function getBonusTargets(
     layoutMode: config.layoutMode,
     playMode: 'relaxed',
   };
-  const stars = getStarThresholds(settings);
-  const minMoves = stars.three.maxMoves;
-  const maxMoves = Math.round(stars.two.maxMoves * 1.35);
-  const minTimeSec = Math.max(12, Math.round(config.colors * config.colors * 0.75));
-  const maxTimeSec = minTimeSec + Math.max(30, Math.round(minTimeSec * 2.5));
-
-  return { minMoves, maxMoves, minTimeSec, maxTimeSec };
+  return getFallbackBonusTargets(settings);
 }
 
 /** End-of-game score with move and time performance bonuses */
@@ -181,7 +178,11 @@ export function loadBestScore(levelId: string): BestScore | null {
 export function saveBestScore(levelId: string, data: BestScore): boolean {
   const current = loadBestScore(levelId);
   if (current && current.score >= data.score) return false;
-  localStorage.setItem(`${STORAGE_PREFIX}${levelId}`, JSON.stringify(data));
+  try {
+    localStorage.setItem(`${STORAGE_PREFIX}${levelId}`, JSON.stringify(data));
+  } catch {
+    /* ignore */
+  }
   return true;
 }
 

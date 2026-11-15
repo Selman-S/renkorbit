@@ -12,6 +12,7 @@ import {
 } from '../game/progressionMap';
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { getPlayerRank } from '../game/ranks';
+import { getStarThresholds } from '../game/stars';
 import { InstallAppModal } from './InstallAppModal';
 import { RankBadge } from './RankBadge';
 import { Profile } from './Profile';
@@ -208,7 +209,14 @@ export function LevelSelect({
                       <span className="journey-node__title">
                         {step.index}. {step.title}
                       </span>
-                      <span className="journey-node__sub">{step.subtitle}</span>
+                      <span className="journey-node__sub">
+                        {isCurrent
+                          ? `${step.subtitle} · 3★ ≤${getStarThresholds(
+                              { colors: step.colors, layoutMode: step.layoutMode, playMode: 'relaxed' },
+                              step.index,
+                            ).three.maxMoves} hamle`
+                          : step.subtitle}
+                      </span>
                     </span>
                     <span className="journey-node__side">
                       {progress.completed && progress.stars > 0 ? (

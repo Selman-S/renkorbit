@@ -2,6 +2,8 @@ import './GameControls.css';
 
 interface GameControlsProps {
   canUndo: boolean;
+  /** Remaining undos on a limited step; null = unlimited */
+  undoLeft?: number | null;
   soundMuted: boolean;
   onUndo: () => void;
   onRestart: () => void;
@@ -12,6 +14,7 @@ interface GameControlsProps {
 
 export function GameControls({
   canUndo,
+  undoLeft = null,
   soundMuted,
   onUndo,
   onRestart,
@@ -50,7 +53,7 @@ export function GameControls({
         onClick={onUndo}
         disabled={!canUndo}
       >
-        Geri Al
+        {undoLeft === null ? 'Geri Al' : `Geri Al (${undoLeft})`}
       </button>
       <button type="button" className="game-controls__btn game-controls__btn--primary" onClick={onRestart}>
         Yeniden

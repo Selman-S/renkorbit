@@ -34,7 +34,16 @@ export function spendCoins(amount: number): boolean {
   return true;
 }
 
-/** Coins earned on puzzle win */
+/**
+ * Replaying a cleared board pays only for beating the record,
+ * so coins and total score cannot be farmed by repeating a step.
+ */
+export function calculateReplayCoins(isNewRecord: boolean, starsGained: number): number {
+  if (!isNewRecord) return 0;
+  return 25 + Math.max(0, starsGained) * 15;
+}
+
+/** Coins earned on the first clear of a board */
 export function calculateWinCoins(
   stars: StarCount,
   score: number,

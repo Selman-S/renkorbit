@@ -1,4 +1,5 @@
-import { PROGRESSION_STEPS, type ProgressionStep } from './progressionMap';
+import type { GameSettings } from './levelConfig';
+import { PROGRESSION_STEPS, type ProgressionStep, type StepVariant } from './progressionMap';
 
 export interface BonusTargets {
   minMoves: number;
@@ -7,7 +8,7 @@ export interface BonusTargets {
   maxTimeSec: number;
 }
 
-type LayoutKind = 'rows' | 'mixed' | 'usta';
+export type LayoutKind = StepVariant;
 
 /** User playtest — near-optimal move counts per color tier */
 const PLAYTEST_MOVES: Record<LayoutKind, [number, number][]> = {
@@ -162,8 +163,7 @@ const TIME_CURVES: Record<LayoutKind, [number, number][]> = {
 };
 
 function layoutKind(step: ProgressionStep): LayoutKind {
-  if (step.layoutMode === 'rows') return 'rows';
-  return step.title.endsWith('Usta') ? 'usta' : 'mixed';
+  return step.variant;
 }
 
 function minMovesFor(colors: number, kind: LayoutKind): number {
@@ -174,11 +174,24 @@ function minTimeFor(colors: number, kind: LayoutKind): number {
   return interpolateCurve(TIME_CURVES[kind], colors);
 }
 
+/** Playtest near-optimal move count — the realistic baseline for stars and bonuses */
+export function getBaselineMinMoves(colors: number, kind: LayoutKind): number {
+  return minMovesFor(colors, kind);
+}
+
 function buildMaxTargets(minMoves: number, minTimeSec: number): Pick<BonusTargets, 'maxMoves' | 'maxTimeSec'> {
   return {
     maxMoves: minMoves + Math.max(15, Math.round(minMoves * 1.5)),
     maxTimeSec: minTimeSec + Math.max(25, Math.round(minTimeSec * 2.2)),
   };
+}
+
+/** Targets for shared / non-journey boards, from the same playtest curves */
+export function getFallbackBonusTargets(settings: GameSettings): BonusTargets {
+  const kind: LayoutKind = settings.layoutMode === 'rows' ? 'rows' : 'mixed';
+  const minMoves = minMovesFor(settings.colors, kind);
+  const minTimeSec = minTimeFor(settings.colors, kind);
+  return { minMoves, minTimeSec, ...buildMaxTargets(minMoves, minTimeSec) };
 }
 
 function buildStepTargets(step: ProgressionStep): BonusTargets {

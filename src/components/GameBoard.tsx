@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { LevelConfig } from '../game/levelConfig';
 import type { BallSkinId } from '../game/shop';
-import type { ColorId, Column } from '../game/types';
+import type { ColorId, Column, TubeScores } from '../game/types';
 import { useBoardLayout } from '../hooks/useBoardLayout';
 import { DragFloatingBall } from './DragFloatingBall';
 import { Tube } from './Tube';
@@ -14,9 +14,14 @@ interface GameBoardProps {
   disabled: boolean;
   canDrop: (from: number, to: number) => boolean;
   onBallMove: (from: number, to: number) => void;
-  onPick?: () => void;
-  onDrop?: () => void;
+  /** stackHeight = balls in the source tube before pick-up */
+  onPick?: (stackHeight: number) => void;
+  /** stackHeight = balls in the target tube after landing */
+  onDrop?: (stackHeight: number) => void;
   ballSkin?: BallSkinId;
+  tubeScores?: TubeScores;
+  /** Board-wide pulse after the win */
+  celebrate?: boolean;
 }
 
 type FloatingBallState =
@@ -25,6 +30,15 @@ type FloatingBallState =
       mode: 'drop';
       from: number;
       to: number;
+      colorId: ColorId;
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
+    }
+  | {
+      mode: 'return';
+      from: number;
       colorId: ColorId;
       x: number;
       y: number;
@@ -98,6 +112,11 @@ function findNearestTube(x: number, tubeRefs: Map<number, HTMLDivElement>): numb
   return best.index;
 }
 
+interface DropResolution {
+  nearest: number | null;
+  valid: boolean;
+}
+
 export function GameBoard({
   columns,
   config,
@@ -108,6 +127,8 @@ export function GameBoard({
   onPick,
   onDrop,
   ballSkin = 'classic',
+  tubeScores = {},
+  celebrate = false,
 }: GameBoardProps) {
   const { ballSize, gap } = useBoardLayout(config.columns, config.capacity);
 
@@ -127,10 +148,10 @@ export function GameBoard({
   }, []);
 
   const resolveDropTarget = useCallback(
-    (x: number, from: number): number | null => {
-      const target = findNearestTube(x, tubeRefs.current);
-      if (target === null || target === from || !canDrop(from, target)) return null;
-      return target;
+    (x: number, from: number): DropResolution => {
+      const nearest = findNearestTube(x, tubeRefs.current);
+      const valid = nearest !== null && nearest !== from && canDrop(from, nearest);
+      return { nearest, valid };
     },
     [canDrop],
   );
@@ -144,22 +165,23 @@ export function GameBoard({
   const commitPendingDrop = useCallback(() => {
     const pending = floatingRef.current;
     if (pending?.mode !== 'drop') return;
-    onDrop?.();
+    onDrop?.(columns[pending.to].length + 1);
     onBallMove(pending.from, pending.to);
     setFloating(null);
     setHoverIfChanged(null);
-  }, [onBallMove, onDrop, setHoverIfChanged]);
+  }, [onBallMove, onDrop, setHoverIfChanged, columns]);
 
   const handleTubePointerDown = useCallback(
-    (from: number, colorId: ColorId, event: ReactPointerEvent<HTMLElement>, _anchorEl: HTMLElement) => {
+    (from: number, colorId: ColorId, event: ReactPointerEvent<HTMLElement>) => {
       if (disabled) return;
 
       const pending = floatingRef.current;
       if (pending?.mode === 'drop') {
         commitPendingDrop();
-      } else if (pending) {
+      } else if (pending?.mode === 'drag') {
         return;
       }
+      // A ball still flying back home is simply replaced by the new pick
 
       const liftY = getTouchLiftPx(event, ballSize);
 
@@ -172,15 +194,22 @@ export function GameBoard({
         liftY,
       });
       setHoverIfChanged(null);
-      onPick?.();
+      onPick?.(columns[from].length);
     },
-    [disabled, commitPendingDrop, setHoverIfChanged, onPick, ballSize],
+    [disabled, commitPendingDrop, setHoverIfChanged, onPick, ballSize, columns],
   );
 
-  const handleDropComplete = useCallback(() => {
-    if (floatingRef.current?.mode !== 'drop') return;
-    commitPendingDrop();
-  }, [commitPendingDrop]);
+  const handleAnimationDone = useCallback(() => {
+    const pending = floatingRef.current;
+    if (pending?.mode === 'drop') {
+      commitPendingDrop();
+      return;
+    }
+    if (pending?.mode === 'return') {
+      setFloating(null);
+      setHoverIfChanged(null);
+    }
+  }, [commitPendingDrop, setHoverIfChanged]);
 
   useEffect(() => {
     if (floating?.mode !== 'drag') return;
@@ -194,37 +223,59 @@ export function GameBoard({
           : f,
       );
 
-      const target = resolveDropTarget(e.clientX, drag.from);
-      setHoverIfChanged(target);
+      const { nearest, valid } = resolveDropTarget(e.clientX, drag.from);
+      setHoverIfChanged(valid ? nearest : null);
     };
 
     const handlePointerUp = (e: PointerEvent) => {
-      const target = resolveDropTarget(e.clientX, drag.from);
+      const { nearest, valid } = resolveDropTarget(e.clientX, drag.from);
+      const pointer = { x: e.clientX, y: e.clientY - drag.liftY };
 
-      if (target !== null) {
-        const tubeEl = tubeRefs.current.get(target);
-        const landing = tubeEl ? getLandingPosition(tubeEl, columns[target].length) : null;
+      if (valid && nearest !== null) {
+        const tubeEl = tubeRefs.current.get(nearest);
+        const landing = tubeEl ? getLandingPosition(tubeEl, columns[nearest].length) : null;
 
         if (landing) {
           setFloating({
             mode: 'drop',
             from: drag.from,
-            to: target,
+            to: nearest,
             colorId: drag.colorId,
-            x: e.clientX,
-            y: e.clientY - drag.liftY,
+            ...pointer,
             targetX: landing.x,
             targetY: landing.y,
           });
-          setHoverIfChanged(target);
+          setHoverIfChanged(nearest);
           return;
         }
 
-        onDrop?.();
-        onBallMove(drag.from, target);
+        onDrop?.(columns[nearest].length + 1);
+        onBallMove(drag.from, nearest);
+        setFloating(null);
+        setHoverIfChanged(null);
+        return;
       }
 
-      setFloating(null);
+      // Invalid release — fly back home; a real tube target also shakes
+      if (nearest !== null && nearest !== drag.from) {
+        onBallMove(drag.from, nearest);
+      }
+
+      const homeEl = tubeRefs.current.get(drag.from);
+      const home = homeEl ? getLandingPosition(homeEl, columns[drag.from].length - 1) : null;
+
+      if (home) {
+        setFloating({
+          mode: 'return',
+          from: drag.from,
+          colorId: drag.colorId,
+          ...pointer,
+          targetX: home.x,
+          targetY: home.y,
+        });
+      } else {
+        setFloating(null);
+      }
       setHoverIfChanged(null);
     };
 
@@ -241,6 +292,7 @@ export function GameBoard({
 
   const isDragging = floating?.mode === 'drag';
   const dragFrom = floating?.from ?? null;
+  const isAnimating = floating?.mode === 'drop' || floating?.mode === 'return';
 
   return (
     <div className="game-board-wrap">
@@ -252,10 +304,11 @@ export function GameBoard({
           ballSkin={ballSkin}
           x={floating.x}
           y={floating.y}
-          dropping={floating.mode === 'drop'}
-          targetX={floating.mode === 'drop' ? floating.targetX : undefined}
-          targetY={floating.mode === 'drop' ? floating.targetY : undefined}
-          onDropComplete={handleDropComplete}
+          animating={isAnimating}
+          transitionPreset={floating.mode === 'return' ? 'return' : 'drop'}
+          targetX={isAnimating ? floating.targetX : undefined}
+          targetY={isAnimating ? floating.targetY : undefined}
+          onAnimationDone={handleAnimationDone}
         />
       )}
 
@@ -279,6 +332,9 @@ export function GameBoard({
             disabled={disabled || isDragging}
             dragFrom={dragFrom}
             ballSkin={ballSkin}
+            earnedPoints={tubeScores[index]}
+            celebrate={celebrate}
+            celebrateDelay={index * 0.06}
             onTubePointerDown={handleTubePointerDown}
           />
         ))}

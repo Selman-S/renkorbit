@@ -40,18 +40,17 @@ Mobil ve tablet odaklı web tabanlı renk sıralama bulmacası.
 
 ## 2. Galaksi Yolu (Ana Ekran)
 
-9 adımlık doğrusal ilerleme — menüde tek ana akış:
+30 adımlık doğrusal ilerleme — menüde tek ana akış. 3 renkten 12 renge, her renk sayısında 3 adım:
 
-| Adım | Ayar |
-|------|------|
-| 1–3 | 4 renk |
-| 4–6 | 8 renk |
-| 7–9 | 12 renk |
+| Adım türü | `variant` | Açıklama |
+|-----------|-----------|----------|
+| **Yörünge** | `rows` | Sıralı başlangıç |
+| **Karışık** | `mixed` | Tam karışık |
+| **Usta** | `usta` | Karışık + **3 geri alma** sınırı, daha sıkı bonus hedefleri |
 
-Her tier: **Sıralı Rahat** → **Karışık Rahat** → **Karışık Süreli**
-
+- Hepsi rahat mod (süre limiti yok; süre arka planda sayılır, bitişte bonus)
 - Adım tamamlanınca sonraki açılır (`renkorbit_journey`)
-- Her adım için yıldız kaydı
+- Her adım için yıldız kaydı; açık adımın kartında 3★ hedefi görünür
 - Kazanma sonrası **Sonraki adım** butonu
 
 ---
@@ -66,13 +65,16 @@ Her tier: **Sıralı Rahat** → **Karışık Rahat** → **Karışık Süreli**
 
 ### 3.2 Oyun İçi HUD
 - Sol: toplam puan (👑)
-- Orta: anlık brüt puan + combo etiketi
+- Orta: anlık brüt puan (sayaçla artar) + combo şeridi: `×N COMBO` ve kalan hamle pipleri
 - Sağ: liderlik tablosu
 - Alt meta: seviye etiketi, hamle sayısı (**süre gösterilmez**)
 
 ### 3.3 Sürükle & Bırak
-- `DragFloatingBall`, geçerli hedefte yeşil glow
-- Undo, yeniden başlat, menü, ses aç/kapa
+- `DragFloatingBall`, geçerli hedefte camgöbeği (cyan) glow
+- Geçersiz bırakma: top kaynağa geri uçar, hedef tüp sallanır, ses + titreşim
+- Tüp tamamlanınca kendi renginde glow + "+puan" + çan sesi
+- Undo (Usta'da sınırlı), yeniden başlat, menü, ses aç/kapa
+- Haptik: pick/drop/geçersiz/tüp tamam/combo/kazanma (`navigator.vibrate`, ses kapalıyken de çalışır)
 
 ### 3.4 İlk Açılış
 - Oyuncu adı istenir (`renkorbit_username`)
@@ -84,28 +86,35 @@ Her tier: **Sıralı Rahat** → **Karışık Rahat** → **Karışık Süreli**
 
 ### 4.1 Oyun Sırasında
 - Ekrandaki puan = **brüt combo puanı** (tamamlanan sütunlardan)
-- Combo: ardışık hamlelerde sütun tamamlama → ×1…×5 çarpan
-- Tamamlanan sütun bozulursa o sütunun puanı düşer, combo sıfırlanır
-- Combo kazanımında ortada patlama animasyonu + ses
+- Tüp puanı = `kapasite × 20 × round(N/2)`
+- **Combo zinciri:** tüp tamamlayınca combo +1, o tüp `tubeValue × min(combo, 8)` kazandırır
+- **Hamle penceresi:** `clamp(ceil(N/2)+1, 3, 7)` hamle içinde yeni tüp bitirmezsen zincir biter → "ZİNCİR BİTTİ" (puan düşmez)
+- Tamamlanan sütun bozulursa o sütunun puanı düşer, zincir kırılır → "KIRILDI!"
+- ×2 ve üstü combo'da ortada patlama animasyonu + ses; ×8 "MAX COMBO"
 
 ### 4.2 Oyun Bitişi
 ```
 Brüt puan     = comboScore (tüp puanları toplamı)
-Hamle cezası  = hamle × (3 × seviye çarpanı)
-Süre cezası   = saniye × (1 × seviye çarpanı)
-Toplam puan   = max(0, brüt − hamle − süre)
+Hamle bonusu  = brüt × 0.125 × (hedefe yakınlık, 0…1)
+Süre bonusu   = brüt × 0.125 × (hedefe yakınlık, 0…1)
+Toplam puan   = brüt + hamle bonusu + süre bonusu   (en fazla brüt × 1.25)
 ```
 
-Seviye çarpanı: 4 renk → 1, 8 renk → 2, 12 renk → 3
+Hedefler adım başına `journeyBonusTargets.ts` playtest eğrisinden gelir.
 
 ### 4.3 Toplam Puan
-- Her galibiyet sonrası **toplam puan**a eklenir (`renkorbit_total_score`)
-- Menü ve HUD sol üstte gösterilir
-- Liderlik tablosunda oyuncu skoru budur
+- **İlk bitirişte** puanın tamamı toplama eklenir (`renkorbit_total_score`)
+- **Tekrar oyunda** sadece rekoru aştığın kadarı eklenir; rekor kırılmazsa +0
+- Menü ve HUD sol üstte gösterilir; liderlik tablosunda oyuncu skoru budur
 
 ### 4.4 Yıldızlar
-- Sadece **hamle sayısına** göre (1★ / 2★ / 3★)
-- Süre yıldızı etkilemez
+- Sadece **hamle sayısına** göre (1★ / 2★ / 3★); süre etkilemez
+- Eşikler playtest optimumundan: **3★ ≤ optimum × 1.15**, **2★ ≤ optimum × 1.6**
+- Kazanma ekranı bir sonraki yıldız için hedef hamleyi gösterir
+
+### 4.5 Coin
+- İlk bitiriş: `10 + 15×yıldız + puan/100 + (maxCombo≥3 ? 3×maxCombo) + (rekor ? 25)`
+- Tekrar oyun: rekor kırılırsa `25 + 15 × kazanılan yeni yıldız`, aksi halde 0
 
 ---
 
@@ -121,7 +130,7 @@ Seviye çarpanı: 4 renk → 1, 8 renk → 2, 12 renk → 3
 
 ## 6. Liderlik Tablosu (Supabase)
 
-- **Tüm zamanlar** — `total_score` sıralaması (ilk 50)
+- **Tüm zamanlar** — `total_score` sıralaması, 20'şer kişilik liglere bölünmüş
 - Her cihaz: `player_id` (UUID) + `username`
 - Kazanınca skor Supabase'e sync edilir
 - `.env` yoksa çevrimdışı mod (yalnızca yerel skor)
@@ -198,10 +207,15 @@ src/
 
 | Kategori | Durum |
 |----------|-------|
-| Galaksi yolu (9 adım) | ✅ |
+| Galaksi yolu (30 adım) | ✅ |
+| Combo hamle penceresi + ×8 tavan | ✅ |
+| Yıldız eşikleri playtest tabanlı | ✅ |
+| Anti-farm (tekrar oyunda sadece rekor farkı) | ✅ |
+| Usta: 3 geri alma | ✅ |
+| Haptik + yeni ses motoru | ✅ |
 | Sürükle-bırak + animasyon | ✅ |
 | Combo + patlama FX | ✅ |
-| Gizli süre + bitiş cezası | ✅ |
+| Gizli süre + bitiş bonusu | ✅ |
 | Toplam puan + liderlik | ✅ |
 | Mağaza + coin + temalar | ✅ |
 | 12 başarım | ✅ |

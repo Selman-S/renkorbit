@@ -1,51 +1,61 @@
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { calculateScoreBreakdown, formatTime, type BestScore } from '../game/scoring';
-import type { StarCount } from '../game/stars';
+import { getStarThresholds, type StarCount } from '../game/stars';
 import type { GameState } from '../game/types';
+import { useCountUp } from '../hooks/useCountUp';
 import { StarRow } from './StarRow';
 import './WinModal.css';
 
 interface WinModalProps {
   state: GameState;
+  /** Parent delays this past the win so the last tube FX can play */
+  open: boolean;
   isNewRecord: boolean;
   isNewStars: boolean;
   earnedStars: StarCount;
   bestStars: StarCount;
   bestScore: BestScore | null;
   earnedCoins?: number;
+  /** Points added to the all-time total (0 on a replay that didn't beat the record) */
+  earnedTotalCredit?: number;
   newAchievements?: string[];
   showNextStep?: boolean;
   onNextStep?: () => void;
   onPlayAgain: () => void;
   onMenu: () => void;
   onShare?: () => void;
+  onStarReveal?: (index: number) => void;
 }
+
+/** 0 title · 1 stars · 2 score rows · 3 badges + actions */
+type Stage = 0 | 1 | 2 | 3;
+
+const STAR_STAGGER_MS = 220;
+
+const rowMotion = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+};
 
 export function WinModal({
   state,
+  open,
   isNewRecord,
   isNewStars,
   earnedStars,
   bestStars,
   bestScore,
   earnedCoins = 0,
+  earnedTotalCredit = 0,
   newAchievements = [],
   showNextStep = false,
   onNextStep,
   onPlayAgain,
   onMenu,
   onShare,
+  onStarReveal,
 }: WinModalProps) {
-  const breakdown = calculateScoreBreakdown(
-    state.comboScore,
-    state.moves,
-    state.elapsedSec,
-    state.config,
-    state.columns,
-    state.journeyStep,
-  );
-  const open = state.status === 'won';
-
   return (
     <AnimatePresence>
       {open && (
@@ -56,6 +66,76 @@ export function WinModal({
           exit={{ opacity: 0 }}
           transition={{ duration: 0.25 }}
         >
+          <WinCard
+            state={state}
+            isNewRecord={isNewRecord}
+            isNewStars={isNewStars}
+            earnedStars={earnedStars}
+            bestStars={bestStars}
+            bestScore={bestScore}
+            earnedCoins={earnedCoins}
+            earnedTotalCredit={earnedTotalCredit}
+            newAchievements={newAchievements}
+            showNextStep={showNextStep}
+            onNextStep={onNextStep}
+            onPlayAgain={onPlayAgain}
+            onMenu={onMenu}
+            onShare={onShare}
+            onStarReveal={onStarReveal}
+          />
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+type WinCardProps = Omit<WinModalProps, 'open'>;
+
+/** Mounted only while open, so the reveal stage starts fresh every win */
+function WinCard({
+  state,
+  isNewRecord,
+  isNewStars,
+  earnedStars,
+  bestStars,
+  bestScore,
+  earnedCoins = 0,
+  earnedTotalCredit = 0,
+  newAchievements = [],
+  showNextStep = false,
+  onNextStep,
+  onPlayAgain,
+  onMenu,
+  onShare,
+  onStarReveal,
+}: WinCardProps) {
+  const breakdown = calculateScoreBreakdown(
+    state.comboScore,
+    state.moves,
+    state.elapsedSec,
+    state.config,
+    state.columns,
+    state.journeyStep,
+  );
+  const thresholds = getStarThresholds(state.settings, state.journeyStep);
+
+  const [stage, setStage] = useState<Stage>(0);
+
+  useEffect(() => {
+    const starsDone = 250 + earnedStars * STAR_STAGGER_MS + 300;
+    const timers = [
+      window.setTimeout(() => setStage(1), 250),
+      window.setTimeout(() => setStage(2), starsDone),
+      window.setTimeout(() => setStage(3), starsDone + 450),
+    ];
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [earnedStars]);
+
+  const shownTotal = useCountUp(stage >= 2 ? breakdown.finalScore : 0, 700);
+
+  const replayNoGain = earnedTotalCredit === 0 && earnedCoins === 0;
+
+  return (
           <motion.div
             className="win-modal"
             role="dialog"
@@ -71,75 +151,199 @@ export function WinModal({
             <p className="win-modal__subtitle">{state.config.label} tamamlandı</p>
 
             <div className="win-modal__stars-wrap">
-              <StarRow count={earnedStars} size="lg" />
-              {isNewStars && earnedStars > 0 && (
-                <span className="win-modal__stars-badge">Yeni yıldız rekoru!</span>
+              {stage >= 1 ? (
+                <StarRow
+                  count={earnedStars}
+                  size="lg"
+                  animate
+                  staggerMs={STAR_STAGGER_MS}
+                  onStarShown={onStarReveal}
+                />
+              ) : (
+                <StarRow count={0} size="lg" />
               )}
+              <AnimatePresence>
+                {stage >= 2 && (
+                  <motion.span
+                    key="star-hint"
+                    className={`win-modal__star-target${earnedStars === 3 ? ' win-modal__star-target--perfect' : ''}`}
+                    {...rowMotion}
+                    transition={{ duration: 0.25 }}
+                  >
+                    {earnedStars === 3
+                      ? `Mükemmel! Hedef ≤${thresholds.three.maxMoves} hamle`
+                      : earnedStars === 2
+                        ? `3★ için ≤${thresholds.three.maxMoves} hamle`
+                        : `2★ için ≤${thresholds.two.maxMoves} · 3★ için ≤${thresholds.three.maxMoves} hamle`}
+                  </motion.span>
+                )}
+                {stage >= 2 && isNewStars && earnedStars > 0 && (
+                  <motion.span
+                    key="star-badge"
+                    className="win-modal__stars-badge"
+                    {...rowMotion}
+                    transition={{ duration: 0.25, delay: 0.1 }}
+                  >
+                    Yeni yıldız rekoru!
+                  </motion.span>
+                )}
+              </AnimatePresence>
             </div>
 
-            {isNewRecord && (
-              <div className="win-modal__badge">Yeni puan rekoru!</div>
-            )}
-
-            {newAchievements.length > 0 && (
-              <div className="win-modal__badge win-modal__badge--achievements">
-                🏅 Yeni rozet: {newAchievements.join(', ')}
-              </div>
-            )}
+            <AnimatePresence>
+              {stage >= 3 && isNewRecord && (
+                <motion.div
+                  key="record"
+                  className="win-modal__badge"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 24 }}
+                >
+                  Yeni puan rekoru!
+                </motion.div>
+              )}
+              {stage >= 3 && newAchievements.length > 0 && (
+                <motion.div
+                  key="achievements"
+                  className="win-modal__badge win-modal__badge--achievements"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 24, delay: 0.08 }}
+                >
+                  🏅 Yeni rozet: {newAchievements.join(', ')}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div className="win-modal__scores">
-              <div className="win-modal__row">
-                <span>Brüt puan</span>
-                <strong>{breakdown.grossScore}</strong>
-              </div>
-              {breakdown.moveBonus > 0 && (
-                <div className="win-modal__row win-modal__row--bonus">
-                  <span>
-                    Hamle bonusu ({breakdown.moves} / ≤{breakdown.targets.minMoves})
-                  </span>
-                  <strong>+{breakdown.moveBonus}</strong>
-                </div>
-              )}
-              {breakdown.timeBonus > 0 && (
-                <div className="win-modal__row win-modal__row--bonus">
-                  <span>
-                    Süre bonusu ({formatTime(breakdown.elapsedSec)} / ≤
-                    {formatTime(breakdown.targets.minTimeSec)})
-                  </span>
-                  <strong>+{breakdown.timeBonus}</strong>
-                </div>
-              )}
-              <div className="win-modal__row win-modal__row--total">
-                <span>Toplam puan</span>
-                <strong>{breakdown.finalScore}</strong>
-              </div>
-              {earnedCoins > 0 && (
-                <div className="win-modal__row win-modal__row--coins">
-                  <span>Orbit Coin</span>
-                  <strong>+{earnedCoins} 🪙</strong>
-                </div>
-              )}
-              {state.maxCombo >= 2 && (
-                <div className="win-modal__row win-modal__row--muted">
-                  <span>En yüksek combo</span>
-                  <strong>×{state.maxCombo}</strong>
-                </div>
-              )}
-              {bestScore && !isNewRecord && (
-                <div className="win-modal__row win-modal__row--muted">
-                  <span>En iyi puan</span>
-                  <strong>{bestScore.score}</strong>
-                </div>
-              )}
-              {bestStars > 0 && !isNewStars && (
-                <div className="win-modal__row win-modal__row--muted">
-                  <span>En iyi yıldız</span>
-                  <StarRow count={bestStars} size="sm" />
-                </div>
-              )}
+              <AnimatePresence>
+                {stage >= 2 && (
+                  <>
+                    <motion.div
+                      key="gross"
+                      className="win-modal__row"
+                      {...rowMotion}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <span>Brüt puan</span>
+                      <strong>{breakdown.grossScore}</strong>
+                    </motion.div>
+                    {breakdown.moveBonus > 0 && (
+                      <motion.div
+                        key="move"
+                        className="win-modal__row win-modal__row--bonus"
+                        {...rowMotion}
+                        transition={{ duration: 0.25, delay: 0.09 }}
+                      >
+                        <span>
+                          Hamle bonusu ({breakdown.moves} / ≤{breakdown.targets.minMoves})
+                        </span>
+                        <strong>+{breakdown.moveBonus}</strong>
+                      </motion.div>
+                    )}
+                    {breakdown.timeBonus > 0 && (
+                      <motion.div
+                        key="time"
+                        className="win-modal__row win-modal__row--bonus"
+                        {...rowMotion}
+                        transition={{ duration: 0.25, delay: 0.18 }}
+                      >
+                        <span>
+                          Süre bonusu ({formatTime(breakdown.elapsedSec)} / ≤
+                          {formatTime(breakdown.targets.minTimeSec)})
+                        </span>
+                        <strong>+{breakdown.timeBonus}</strong>
+                      </motion.div>
+                    )}
+                    <motion.div
+                      key="total"
+                      className="win-modal__row win-modal__row--total"
+                      {...rowMotion}
+                      transition={{ duration: 0.25, delay: 0.27 }}
+                    >
+                      <span>Toplam puan</span>
+                      <strong>{shownTotal}</strong>
+                    </motion.div>
+                  </>
+                )}
+                {stage >= 3 && (
+                  <>
+                    {earnedTotalCredit > 0 && (
+                      <motion.div
+                        key="credit"
+                        className="win-modal__row win-modal__row--credit"
+                        {...rowMotion}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <span>Toplam puana</span>
+                        <strong>+{earnedTotalCredit} 👑</strong>
+                      </motion.div>
+                    )}
+                    {earnedCoins > 0 && (
+                      <motion.div
+                        key="coins"
+                        className="win-modal__row win-modal__row--coins"
+                        {...rowMotion}
+                        transition={{ duration: 0.25, delay: 0.09 }}
+                      >
+                        <span>Orbit Coin</span>
+                        <strong>+{earnedCoins} 🪙</strong>
+                      </motion.div>
+                    )}
+                    {replayNoGain && (
+                      <motion.div
+                        key="nogain"
+                        className="win-modal__row win-modal__row--hint"
+                        {...rowMotion}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <span>Rekoru geçersen puan ve coin kazanırsın</span>
+                      </motion.div>
+                    )}
+                    {state.maxCombo >= 2 && (
+                      <motion.div
+                        key="combo"
+                        className="win-modal__row win-modal__row--muted"
+                        {...rowMotion}
+                        transition={{ duration: 0.25, delay: 0.18 }}
+                      >
+                        <span>En yüksek combo</span>
+                        <strong>×{state.maxCombo}</strong>
+                      </motion.div>
+                    )}
+                    {bestScore && !isNewRecord && (
+                      <motion.div
+                        key="best"
+                        className="win-modal__row win-modal__row--muted"
+                        {...rowMotion}
+                        transition={{ duration: 0.25, delay: 0.22 }}
+                      >
+                        <span>En iyi puan</span>
+                        <strong>{bestScore.score}</strong>
+                      </motion.div>
+                    )}
+                    {bestStars > 0 && !isNewStars && (
+                      <motion.div
+                        key="beststars"
+                        className="win-modal__row win-modal__row--muted"
+                        {...rowMotion}
+                        transition={{ duration: 0.25, delay: 0.26 }}
+                      >
+                        <span>En iyi yıldız</span>
+                        <StarRow count={bestStars} size="sm" />
+                      </motion.div>
+                    )}
+                  </>
+                )}
+              </AnimatePresence>
             </div>
 
-            <div className="win-modal__actions">
+            <motion.div
+              className="win-modal__actions"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: stage >= 3 ? 1 : 0.35 }}
+              transition={{ duration: 0.3 }}
+            >
               {onShare && (
                 <button type="button" className="win-modal__btn win-modal__btn--share" onClick={onShare}>
                   Paylaş
@@ -157,10 +361,7 @@ export function WinModal({
                   Tekrar
                 </button>
               )}
-            </div>
+            </motion.div>
           </motion.div>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }

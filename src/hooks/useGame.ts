@@ -3,14 +3,22 @@ import { createInitialState, gameReducer } from '../game/gameReducer';
 import { canMove } from '../game/gameLogic';
 import { DEFAULT_SETTINGS, type GameSettings } from '../game/levelConfig';
 
-export function useGame(initialSettings: GameSettings = DEFAULT_SETTINGS) {
+interface UseGameOptions {
+  /** Stops the elapsed-time ticker (menu, overlays) without ending the game */
+  paused?: boolean;
+}
+
+export function useGame(
+  initialSettings: GameSettings = DEFAULT_SETTINGS,
+  { paused = false }: UseGameOptions = {},
+) {
   const [state, dispatch] = useReducer(gameReducer, initialSettings, createInitialState);
 
   useEffect(() => {
-    if (state.status !== 'playing') return;
+    if (state.status !== 'playing' || paused) return;
     const id = window.setInterval(() => dispatch({ type: 'TICK' }), 1000);
     return () => clearInterval(id);
-  }, [state.status]);
+  }, [state.status, paused]);
 
   useEffect(() => {
     if (state.invalidShake === null) return;
@@ -43,6 +51,10 @@ export function useGame(initialSettings: GameSettings = DEFAULT_SETTINGS) {
 
   const clearComboPops = useCallback(() => dispatch({ type: 'CLEAR_COMBO_POPS' }), []);
   const clearComboBreaks = useCallback(() => dispatch({ type: 'CLEAR_COMBO_BREAKS' }), []);
+  const clearTubeCompletions = useCallback(
+    () => dispatch({ type: 'CLEAR_TUBE_COMPLETIONS' }),
+    [],
+  );
 
   return {
     state,
@@ -53,5 +65,6 @@ export function useGame(initialSettings: GameSettings = DEFAULT_SETTINGS) {
     setGame,
     clearComboPops,
     clearComboBreaks,
+    clearTubeCompletions,
   };
 }

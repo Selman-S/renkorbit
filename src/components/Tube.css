@@ -96,5 +96,58 @@
 .tube--invalid .tube__glass {
   border-left-color: rgba(255, 80, 80, 0.8);
   border-right-color: rgba(255, 80, 80, 0.8);
+  box-shadow:
+    0 0 14px rgba(255, 80, 80, 0.35),
+    inset 0 0 20px rgba(0, 0, 0, 0.25);
+}
+
+/* Finished tube — glows in its own color; no size change so layout stays put */
+.tube--complete .tube__glass {
+  border-left-color: color-mix(in srgb, var(--tube-color, #fff) 70%, transparent);
+  border-right-color: color-mix(in srgb, var(--tube-color, #fff) 70%, transparent);
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--tube-color, #fff) 35%, transparent),
+    inset 0 0 20px rgba(0, 0, 0, 0.25),
+    inset 0 0 12px color-mix(in srgb, var(--tube-color, #fff) 18%, transparent);
+}
+
+.tube--complete .tube__rim {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tube-color-hi, #fff) 85%, transparent),
+    color-mix(in srgb, var(--tube-color, #fff) 45%, transparent)
+  );
+  box-shadow: 0 -1px 8px color-mix(in srgb, var(--tube-color, #fff) 60%, transparent);
+}
+
+.tube--complete .tube__base {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--tube-color, #7c4dff) 55%, transparent),
+    rgba(45, 27, 105, 0.9)
+  );
+}
+
+/* "+N" floating up from the tube — positioned relative to the glass */
+.tube__glass {
+  position: relative;
+}
+
+.tube__points {
+  position: absolute;
+  left: 50%;
+  top: 8%;
+  transform: translateX(-50%);
+  z-index: 5;
+  pointer-events: none;
+  font-size: clamp(0.8rem, 3.6vw, 1.05rem);
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--tube-color-hi, #fff);
+  text-shadow:
+    0 0 10px color-mix(in srgb, var(--tube-color, #fff) 80%, transparent),
+    0 1px 0 rgba(0, 0, 0, 0.5);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 

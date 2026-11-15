@@ -78,3 +78,32 @@
 .combo-burst--break .combo-burst__ring {
   border-width: 4px;
 }
+
+/* Streak faded out — quiet, no ring */
+.combo-burst--expire {
+  width: 120px;
+  height: 90px;
+}
+
+.combo-burst__text--expire {
+  font-size: clamp(1.8rem, 9vw, 2.4rem);
+  text-shadow: 0 0 10px rgba(var(--combo-glow, 185, 180, 214), 0.5);
+  opacity: 0.85;
+}
+
+.combo-burst__label--expire {
+  letter-spacing: 0.14em;
+  font-size: 0.66rem;
+}
+
+/* ×8 — gold rays behind the number */
+.combo-burst--max .combo-burst__text {
+  text-shadow:
+    0 0 24px rgba(var(--combo-glow, 255, 215, 0), 1),
+    0 0 60px rgba(var(--combo-glow, 255, 215, 0), 0.7),
+    0 3px 0 rgba(0, 0, 0, 0.35);
+}
+
+.combo-burst--max .combo-burst__ring {
+  border-width: 4px;
+}

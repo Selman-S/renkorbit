@@ -4,14 +4,20 @@ import type { StarCount } from './stars';
 
 const STORAGE_KEY = 'renkorbit_journey';
 
+export type StepVariant = 'rows' | 'mixed' | 'usta';
+
 export interface ProgressionStep {
   index: number;
   colors: ColorCount;
   layoutMode: LayoutMode;
+  variant: StepVariant;
   title: string;
   subtitle: string;
   emoji: string;
 }
+
+/** Usta steps allow only this many undos — the one real difficulty lever */
+export const USTA_UNDO_LIMIT = 3;
 
 const TIER_EMOJIS: Record<number, string> = {
   3: '🪐',
@@ -52,6 +58,7 @@ function buildProgressionSteps(): ProgressionStep[] {
       index,
       colors,
       layoutMode: 'rows',
+      variant: 'rows',
       title: `${tier} Yörünge`,
       subtitle: `${colors}×${colors} · Sıralı`,
       emoji,
@@ -62,6 +69,7 @@ function buildProgressionSteps(): ProgressionStep[] {
       index,
       colors,
       layoutMode: 'mixed',
+      variant: 'mixed',
       title: `${tier} Karışık`,
       subtitle: `${colors}×${colors} · Karışık`,
       emoji,
@@ -72,8 +80,9 @@ function buildProgressionSteps(): ProgressionStep[] {
       index,
       colors,
       layoutMode: 'mixed',
+      variant: 'usta',
       title: `${tier} Usta`,
-      subtitle: `${colors}×${colors} · Usta`,
+      subtitle: `${colors}×${colors} · Usta · ${USTA_UNDO_LIMIT} geri alma`,
       emoji,
     });
     index++;
@@ -123,6 +132,12 @@ export function getJourneySeed(stepIndex: number): number {
   return hashString(
     `renkorbit-journey-v2-${step.colors}-${step.layoutMode}-${stepIndex}`,
   );
+}
+
+/** null = unlimited undo */
+export function getJourneyUndoLimit(stepIndex: number): number | null {
+  const step = getJourneyStep(stepIndex);
+  return step?.variant === 'usta' ? USTA_UNDO_LIMIT : null;
 }
 
 export function getJourneyLabel(stepIndex: number): string {

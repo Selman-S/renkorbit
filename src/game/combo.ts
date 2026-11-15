@@ -1,11 +1,24 @@
 import type { LevelConfig } from './levelConfig';
 import { isTubeComplete, pointsPerCompletedTube } from './scoring';
-import type { Column, TubeScores } from './types';
+import type { Column, ComboBreak, TubeCompletion, TubeScores } from './types';
 
-/** Streak multiplier — 1→×1, 2→×2, 3→×3 … no cap */
+/** Streak multiplier stops growing here — pitch and FX cap with it */
+export const MAX_COMBO_MULTIPLIER = 8;
+
+/** Streak multiplier — 1→×1, 2→×2 … capped at ×8 */
 export function getComboMultiplier(combo: number): number {
   if (combo <= 1) return 1;
-  return combo;
+  return Math.min(combo, MAX_COMBO_MULTIPLIER);
+}
+
+/**
+ * Moves allowed between two tube completions before the streak expires.
+ * Scales gently with board size so big boards can still chain.
+ * N=3,4→3 · 5,6→4 · 7,8→5 · 9,10→6 · 11,12→7
+ */
+export function getComboWindow(config: LevelConfig): number {
+  const raw = Math.ceil(config.colors / 2) + 1;
+  return Math.min(7, Math.max(3, raw));
 }
 
 export interface ComboTheme {
@@ -17,7 +30,7 @@ export interface ComboTheme {
 }
 
 export function getComboTheme(combo: number): ComboTheme {
-  const level = Math.max(combo, 2);
+  const level = Math.min(Math.max(combo, 2), MAX_COMBO_MULTIPLIER);
 
   switch (level) {
     case 2:
@@ -68,15 +81,8 @@ export function getComboTheme(combo: number): ComboTheme {
         ringInner: 'rgba(230, 210, 255, 0.9)',
         glow: '179, 136, 255',
       };
-    case 8:
-      return {
-        text: '#d4fff4',
-        label: '#3dffb8',
-        ring: 'rgba(61, 255, 184, 0.95)',
-        ringInner: 'rgba(200, 255, 235, 0.9)',
-        glow: '61, 255, 184',
-      };
     default:
+      // MAX tier — gold
       return {
         text: '#fff8e0',
         label: '#ffd700',
@@ -97,14 +103,27 @@ export function getComboBreakTheme(): ComboTheme {
   };
 }
 
+/** Muted grey-violet — the streak faded, nothing was lost */
+export function getComboExpireTheme(): ComboTheme {
+  return {
+    text: '#e4e0f5',
+    label: '#b9b4d6',
+    ring: 'rgba(185, 180, 214, 0.7)',
+    ringInner: 'rgba(230, 226, 245, 0.6)',
+    glow: '185, 180, 214',
+  };
+}
+
 export interface ComboUpdate {
   combo: number;
+  comboWindow: number;
   comboScore: number;
   maxCombo: number;
   tubeScores: TubeScores;
   newCompletions: number;
   comboPops: number[];
-  comboBreaks: number[];
+  comboBreaks: ComboBreak[];
+  completedTubes: TubeCompletion[];
 }
 
 function completeTubeIndices(columns: Column[], capacity: number): number[] {
@@ -115,7 +134,12 @@ function completeTubeIndices(columns: Column[], capacity: number): number[] {
   return indices;
 }
 
-/** Update streak and score when tubes complete or break on a move */
+/**
+ * Update streak and score for one move.
+ * 1. Breaking a scored tube deducts its points and kills the streak.
+ * 2. A move that completes nothing spends one move of the window; at 0 the streak expires (no deduction).
+ * 3. Each newly completed tube extends the streak and refills the window.
+ */
 export function applyMoveCombo(
   prevColumns: Column[],
   nextColumns: Column[],
@@ -124,6 +148,7 @@ export function applyMoveCombo(
   currentComboScore: number,
   currentMaxCombo: number,
   currentTubeScores: TubeScores,
+  currentComboWindow: number,
 ): ComboUpdate {
   const capacity = config.capacity;
   const prevComplete = new Set(completeTubeIndices(prevColumns, capacity));
@@ -133,10 +158,11 @@ export function applyMoveCombo(
   const newlyCompleted = [...nextComplete].filter((index) => !prevComplete.has(index));
 
   let combo = currentCombo;
+  let comboWindow = currentComboWindow;
   let comboScore = currentComboScore;
   let maxCombo = currentMaxCombo;
   const tubeScores = { ...currentTubeScores };
-  const comboBreaks: number[] = [];
+  const comboBreaks: ComboBreak[] = [];
 
   if (broken.length > 0) {
     for (const index of broken) {
@@ -144,12 +170,23 @@ export function applyMoveCombo(
       comboScore = Math.max(0, comboScore - earned);
       delete tubeScores[index];
     }
-    if (currentCombo >= 2) comboBreaks.push(currentCombo);
+    if (combo >= 2) comboBreaks.push({ combo, reason: 'broken' });
     combo = 0;
+    comboWindow = 0;
+  }
+
+  if (newlyCompleted.length === 0 && combo > 0) {
+    comboWindow -= 1;
+    if (comboWindow <= 0) {
+      if (combo >= 2) comboBreaks.push({ combo, reason: 'expired' });
+      combo = 0;
+      comboWindow = 0;
+    }
   }
 
   const tubeValue = pointsPerCompletedTube(config);
   const comboPops: number[] = [];
+  const completedTubes: TubeCompletion[] = [];
 
   for (const index of newlyCompleted) {
     combo += 1;
@@ -158,19 +195,25 @@ export function applyMoveCombo(
     comboScore += earned;
     tubeScores[index] = earned;
     maxCombo = Math.max(maxCombo, combo);
+    completedTubes.push({ index, points: earned, combo });
+    comboWindow = getComboWindow(config);
   }
 
   return {
     combo,
+    comboWindow,
     comboScore,
     maxCombo,
     tubeScores,
     newCompletions: newlyCompleted.length,
     comboPops,
     comboBreaks,
+    completedTubes,
   };
 }
 
 export function formatComboLabel(combo: number): string {
-  return `×${Math.max(combo, 1)}`;
+  const level = Math.max(combo, 1);
+  if (level >= MAX_COMBO_MULTIPLIER) return `×${MAX_COMBO_MULTIPLIER} MAX`;
+  return `×${level}`;
 }
