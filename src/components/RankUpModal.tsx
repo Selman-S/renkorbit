@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import type { PlayerRank } from '../game/ranks';
+import { PLAYER_RANKS, type PlayerRank } from '../game/ranks';
 import './RankUpModal.css';
 
 interface RankUpModalProps {
@@ -47,7 +47,10 @@ export function RankUpModal({ rank, onClose }: RankUpModalProps) {
               {rank.title}
             </h2>
             <p className="rank-up__tagline">{rank.tagline}</p>
-            <p className="rank-up__tier">Rütbe {rank.tier} / {5}</p>
+            <p className="rank-up__tier">
+              Rütbe {rank.tier} / {PLAYER_RANKS.length}
+            </p>
+            {rank.reward > 0 && <p className="rank-up__reward">+{rank.reward} 🪙</p>}
 
             <button type="button" className="rank-up__btn" onClick={onClose}>
               Harika!

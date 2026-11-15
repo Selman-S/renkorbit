@@ -2,13 +2,19 @@ import { useState } from 'react';
 import { loadCoins } from '../game/coins';
 import {
   equipItem,
+  getCosmeticId,
+  isEquipped,
   isOwned,
   loadInventory,
   purchaseItem,
   SHOP_ITEMS,
+  type BallSkinId,
   type ShopItem,
+  type ShopItemType,
 } from '../game/shop';
+import { Ball } from './Ball';
 import { ModalCard } from './ModalCard';
+import './Tube.css';
 import './Shop.css';
 
 interface ShopProps {
@@ -17,8 +23,17 @@ interface ShopProps {
   onUpdate?: () => void;
 }
 
+const TABS: { id: ShopItemType; label: string }[] = [
+  { id: 'ballSkin', label: 'Toplar' },
+  { id: 'tubeSkin', label: 'Tüpler' },
+  { id: 'theme', label: 'Temalar' },
+];
+
+/** Three palette picks spread across the wheel for previews */
+const PREVIEW_COLORS = [0, 5, 8];
+
 export function Shop({ open, onClose, onUpdate }: ShopProps) {
-  const [tab, setTab] = useState<'ballSkin' | 'theme'>('ballSkin');
+  const [tab, setTab] = useState<ShopItemType>('ballSkin');
   const [message, setMessage] = useState<string | null>(null);
   const [, bump] = useState(0);
 
@@ -47,11 +62,6 @@ export function Shop({ open, onClose, onUpdate }: ShopProps) {
     }
   };
 
-  const isEquipped = (item: ShopItem) => {
-    if (item.type === 'ballSkin') return inventory.equippedBallSkin === item.id.replace('skin-', '');
-    return inventory.equippedTheme === item.id.replace('theme-', '');
-  };
-
   return (
     <ModalCard
       open={open}
@@ -67,21 +77,19 @@ export function Shop({ open, onClose, onUpdate }: ShopProps) {
         </p>
       }
     >
-      <div className="shop__tabs">
-        <button
-          type="button"
-          className={`shop__tab ${tab === 'ballSkin' ? 'shop__tab--active' : ''}`}
-          onClick={() => setTab('ballSkin')}
-        >
-          Top Skinleri
-        </button>
-        <button
-          type="button"
-          className={`shop__tab ${tab === 'theme' ? 'shop__tab--active' : ''}`}
-          onClick={() => setTab('theme')}
-        >
-          Temalar
-        </button>
+      <div className="shop__tabs" role="tablist">
+        {TABS.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            role="tab"
+            aria-selected={tab === t.id}
+            className={`shop__tab ${tab === t.id ? 'shop__tab--active' : ''}`}
+            onClick={() => setTab(t.id)}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {message && <p className="shop__toast">{message}</p>}
@@ -92,7 +100,8 @@ export function Shop({ open, onClose, onUpdate }: ShopProps) {
             key={item.id}
             item={item}
             owned={isOwned(item.id)}
-            equipped={isEquipped(item)}
+            equipped={isEquipped(item, inventory)}
+            affordable={coins >= item.price}
             onPurchase={() => handlePurchase(item)}
             onEquip={() => handleEquip(item)}
           />
@@ -102,24 +111,57 @@ export function Shop({ open, onClose, onUpdate }: ShopProps) {
   );
 }
 
+/** Real look of the cosmetic, not just an emoji */
+function ShopPreview({ item }: { item: ShopItem }) {
+  const id = getCosmeticId(item);
+
+  if (item.type === 'ballSkin') {
+    return (
+      <span className="shop__preview shop__preview--balls" aria-hidden>
+        {PREVIEW_COLORS.map((c) => (
+          <Ball key={c} colorId={c} colorCount={12} size={18} skin={id as BallSkinId} />
+        ))}
+      </span>
+    );
+  }
+
+  if (item.type === 'tubeSkin') {
+    return (
+      <span className={`shop__preview game-board--tube-${id}`} aria-hidden>
+        <span className="tube shop__mini-tube">
+          <span className="tube__rim" />
+          <span className="tube__glass shop__mini-glass">
+            {PREVIEW_COLORS.map((c) => (
+              <Ball key={c} colorId={c} colorCount={12} size={12} />
+            ))}
+          </span>
+          <span className="tube__base" />
+        </span>
+      </span>
+    );
+  }
+
+  return <span className={`shop__preview shop__swatch shop__swatch--${id}`} aria-hidden />;
+}
+
 function ShopRow({
   item,
   owned,
   equipped,
+  affordable,
   onPurchase,
   onEquip,
 }: {
   item: ShopItem;
   owned: boolean;
   equipped: boolean;
+  affordable: boolean;
   onPurchase: () => void;
   onEquip: () => void;
 }) {
   return (
     <li className={`shop__row ${equipped ? 'shop__row--equipped' : ''}`}>
-      <span className="shop__emoji" aria-hidden>
-        {item.emoji}
-      </span>
+      <ShopPreview item={item} />
       <div className="shop__info">
         <span className="shop__name">{item.name}</span>
         <span className="shop__desc">{item.description}</span>
@@ -134,7 +176,11 @@ function ShopRow({
           {equipped ? 'Seçili' : 'Kullan'}
         </button>
       ) : (
-        <button type="button" className="shop__btn shop__btn--buy" onClick={onPurchase}>
+        <button
+          type="button"
+          className={`shop__btn shop__btn--buy${affordable ? '' : ' shop__btn--short'}`}
+          onClick={onPurchase}
+        >
           {item.free ? 'Ücretsiz' : `🪙 ${item.price}`}
         </button>
       )}

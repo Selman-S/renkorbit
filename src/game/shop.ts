@@ -1,9 +1,10 @@
 import { spendCoins } from './coins';
 
 export type BallSkinId = 'classic' | 'neon' | 'matte' | 'crystal';
-export type ThemeId = 'cosmic' | 'nebula' | 'aurora';
+export type TubeSkinId = 'glass' | 'neon' | 'gold' | 'ice';
+export type ThemeId = 'cosmic' | 'nebula' | 'aurora' | 'sunset' | 'deepspace';
 
-export type ShopItemType = 'ballSkin' | 'theme';
+export type ShopItemType = 'ballSkin' | 'tubeSkin' | 'theme';
 
 export interface ShopItem {
   id: string;
@@ -26,14 +27,6 @@ export const SHOP_ITEMS: ShopItem[] = [
     free: true,
   },
   {
-    id: 'skin-neon',
-    type: 'ballSkin',
-    name: 'Neon Işık',
-    description: 'Parlayan neon hale',
-    price: 150,
-    emoji: '💡',
-  },
-  {
     id: 'skin-matte',
     type: 'ballSkin',
     name: 'Mat Gezegen',
@@ -42,12 +35,53 @@ export const SHOP_ITEMS: ShopItem[] = [
     emoji: '🪨',
   },
   {
+    id: 'skin-neon',
+    type: 'ballSkin',
+    name: 'Neon Işık',
+    description: 'Parlayan neon hale',
+    price: 150,
+    emoji: '💡',
+  },
+  {
     id: 'skin-crystal',
     type: 'ballSkin',
     name: 'Kristal',
     description: 'Keskin cam parıltısı',
     price: 200,
     emoji: '💎',
+  },
+  {
+    id: 'tube-glass',
+    type: 'tubeSkin',
+    name: 'Cam Tüp',
+    description: 'Varsayılan şeffaf cam',
+    price: 0,
+    emoji: '🧪',
+    free: true,
+  },
+  {
+    id: 'tube-neon',
+    type: 'tubeSkin',
+    name: 'Neon Tüp',
+    description: 'Pembe-mavi parlayan kenarlar',
+    price: 300,
+    emoji: '🌈',
+  },
+  {
+    id: 'tube-ice',
+    type: 'tubeSkin',
+    name: 'Buz Tüp',
+    description: 'Buzlu, soğuk mavi cam',
+    price: 400,
+    emoji: '🧊',
+  },
+  {
+    id: 'tube-gold',
+    type: 'tubeSkin',
+    name: 'Altın Tüp',
+    description: 'Altın çerçeve, sıcak ışıltı',
+    price: 600,
+    emoji: '🏆',
   },
   {
     id: 'theme-cosmic',
@@ -74,6 +108,22 @@ export const SHOP_ITEMS: ShopItem[] = [
     price: 250,
     emoji: '🌊',
   },
+  {
+    id: 'theme-sunset',
+    type: 'theme',
+    name: 'Gün Batımı',
+    description: 'Turuncu-pembe ufuk',
+    price: 450,
+    emoji: '🌅',
+  },
+  {
+    id: 'theme-deepspace',
+    type: 'theme',
+    name: 'Derin Uzay',
+    description: 'Kapkara gökyüzü, binlerce yıldız',
+    price: 600,
+    emoji: '✨',
+  },
 ];
 
 const INVENTORY_KEY = 'renkorbit_inventory';
@@ -81,47 +131,55 @@ const INVENTORY_KEY = 'renkorbit_inventory';
 export interface PlayerInventory {
   owned: string[];
   equippedBallSkin: BallSkinId;
+  equippedTubeSkin: TubeSkinId;
   equippedTheme: ThemeId;
 }
 
-const DEFAULT_OWNED = ['skin-classic', 'theme-cosmic'];
+const DEFAULT_OWNED = ['skin-classic', 'tube-glass', 'theme-cosmic'];
 
 const DEFAULT_INVENTORY: PlayerInventory = {
   owned: DEFAULT_OWNED,
   equippedBallSkin: 'classic',
+  equippedTubeSkin: 'glass',
   equippedTheme: 'cosmic',
 };
 
-function itemIdToBallSkin(id: string): BallSkinId | null {
-  if (id === 'skin-classic') return 'classic';
-  if (id === 'skin-neon') return 'neon';
-  if (id === 'skin-matte') return 'matte';
-  if (id === 'skin-crystal') return 'crystal';
-  return null;
+const ITEM_PREFIX: Record<ShopItemType, string> = {
+  ballSkin: 'skin-',
+  tubeSkin: 'tube-',
+  theme: 'theme-',
+};
+
+function cosmeticId(item: ShopItem): string {
+  return item.id.slice(ITEM_PREFIX[item.type].length);
 }
 
-function itemIdToTheme(id: string): ThemeId | null {
-  if (id === 'theme-cosmic') return 'cosmic';
-  if (id === 'theme-nebula') return 'nebula';
-  if (id === 'theme-aurora') return 'aurora';
-  return null;
+function isKnown(type: ShopItemType, id: string | undefined): boolean {
+  return SHOP_ITEMS.some((i) => i.type === type && cosmeticId(i) === id);
 }
 
 export function loadInventory(): PlayerInventory {
   try {
     const raw = localStorage.getItem(INVENTORY_KEY);
-    if (!raw) return { ...DEFAULT_INVENTORY };
+    if (!raw) return { ...DEFAULT_INVENTORY, owned: [...DEFAULT_OWNED] };
     const parsed = JSON.parse(raw) as Partial<PlayerInventory>;
     const owned = Array.isArray(parsed.owned)
       ? [...new Set([...DEFAULT_OWNED, ...parsed.owned])]
       : [...DEFAULT_OWNED];
     return {
       owned,
-      equippedBallSkin: parsed.equippedBallSkin ?? 'classic',
-      equippedTheme: parsed.equippedTheme ?? 'cosmic',
+      equippedBallSkin: isKnown('ballSkin', parsed.equippedBallSkin)
+        ? (parsed.equippedBallSkin as BallSkinId)
+        : 'classic',
+      equippedTubeSkin: isKnown('tubeSkin', parsed.equippedTubeSkin)
+        ? (parsed.equippedTubeSkin as TubeSkinId)
+        : 'glass',
+      equippedTheme: isKnown('theme', parsed.equippedTheme)
+        ? (parsed.equippedTheme as ThemeId)
+        : 'cosmic',
     };
   } catch {
-    return { ...DEFAULT_INVENTORY };
+    return { ...DEFAULT_INVENTORY, owned: [...DEFAULT_OWNED] };
   }
 }
 
@@ -139,6 +197,13 @@ export function isOwned(itemId: string): boolean {
 
 export function getShopItem(itemId: string): ShopItem | undefined {
   return SHOP_ITEMS.find((i) => i.id === itemId);
+}
+
+export function isEquipped(item: ShopItem, inv: PlayerInventory = loadInventory()): boolean {
+  const id = cosmeticId(item);
+  if (item.type === 'ballSkin') return inv.equippedBallSkin === id;
+  if (item.type === 'tubeSkin') return inv.equippedTubeSkin === id;
+  return inv.equippedTheme === id;
 }
 
 export function purchaseItem(itemId: string): { ok: boolean; error?: string } {
@@ -166,24 +231,16 @@ export function equipItem(itemId: string): boolean {
   const inv = loadInventory();
   if (!inv.owned.includes(itemId)) return false;
 
-  if (item.type === 'ballSkin') {
-    const skin = itemIdToBallSkin(itemId);
-    if (!skin) return false;
-    inv.equippedBallSkin = skin;
-  } else {
-    const theme = itemIdToTheme(itemId);
-    if (!theme) return false;
-    inv.equippedTheme = theme;
-  }
+  const id = cosmeticId(item);
+  if (item.type === 'ballSkin') inv.equippedBallSkin = id as BallSkinId;
+  else if (item.type === 'tubeSkin') inv.equippedTubeSkin = id as TubeSkinId;
+  else inv.equippedTheme = id as ThemeId;
 
   saveInventory(inv);
   return true;
 }
 
-export function ballSkinToItemId(skin: BallSkinId): string {
-  return `skin-${skin}`;
-}
-
-export function themeToItemId(theme: ThemeId): string {
-  return `theme-${theme}`;
+/** Cosmetic id (e.g. "neon") for a shop item — used by previews */
+export function getCosmeticId(item: ShopItem): string {
+  return cosmeticId(item);
 }

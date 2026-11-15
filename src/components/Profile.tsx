@@ -197,6 +197,9 @@ export function Profile({
               </span>
               <span className="profile__name">{badge.title}</span>
               <span className="profile__desc">{badge.description}</span>
+              <span className={`profile__reward${earned ? ' profile__reward--earned' : ''}`}>
+                {earned ? '✓ ' : ''}+{badge.reward} 🪙
+              </span>
             </li>
           );
         })}

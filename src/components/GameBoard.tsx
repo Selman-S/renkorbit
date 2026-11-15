@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { LevelConfig } from '../game/levelConfig';
-import type { BallSkinId } from '../game/shop';
+import type { BallSkinId, TubeSkinId } from '../game/shop';
 import type { ColorId, Column, TubeScores } from '../game/types';
 import { useBoardLayout } from '../hooks/useBoardLayout';
 import { DragFloatingBall } from './DragFloatingBall';
@@ -19,6 +19,7 @@ interface GameBoardProps {
   /** stackHeight = balls in the target tube after landing */
   onDrop?: (stackHeight: number) => void;
   ballSkin?: BallSkinId;
+  tubeSkin?: TubeSkinId;
   tubeScores?: TubeScores;
   /** Board-wide pulse after the win */
   celebrate?: boolean;
@@ -127,6 +128,7 @@ export function GameBoard({
   onPick,
   onDrop,
   ballSkin = 'classic',
+  tubeSkin = 'glass',
   tubeScores = {},
   celebrate = false,
 }: GameBoardProps) {
@@ -313,7 +315,7 @@ export function GameBoard({
       )}
 
       <div
-        className="game-board"
+        className={`game-board game-board--tube-${tubeSkin}`}
         style={{
           gap,
           gridTemplateColumns: `repeat(${config.columns}, minmax(0, 1fr))`,

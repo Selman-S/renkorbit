@@ -17,10 +17,12 @@
   backdrop-filter: none;
 }
 
+/* Above the in-board win / time-up modals (50) and tutorial (55) so a
+   scoreboard opened from the win screen isn't hidden behind it */
 .modal-card__backdrop--contained {
   position: absolute;
   inset: 0;
-  z-index: 40;
+  z-index: 60;
   padding: 12px 16px;
   padding-top: max(12px, env(safe-area-inset-top));
   padding-bottom: max(12px, env(safe-area-inset-bottom));

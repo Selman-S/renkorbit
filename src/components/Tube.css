@@ -128,6 +128,64 @@
   );
 }
 
+/*
+ * Tube skins (shop) — colour/glow only, never size, so useBoardLayout stays exact.
+ * :not() keeps the valid / invalid / complete states readable over any skin.
+ */
+.game-board--tube-neon .tube:not(.tube--valid):not(.tube--invalid):not(.tube--complete) .tube__glass {
+  border-left-color: rgba(255, 107, 203, 0.75);
+  border-right-color: rgba(76, 201, 240, 0.75);
+  box-shadow:
+    0 0 10px rgba(224, 64, 251, 0.3),
+    inset 0 0 20px rgba(0, 0, 0, 0.25);
+}
+
+.game-board--tube-neon .tube:not(.tube--complete) .tube__rim {
+  background: linear-gradient(90deg, #ff6bcb, #4cc9f0);
+  box-shadow: 0 0 8px rgba(224, 64, 251, 0.6);
+}
+
+.game-board--tube-neon .tube:not(.tube--complete) .tube__base {
+  background: linear-gradient(90deg, rgba(255, 107, 203, 0.6), rgba(76, 201, 240, 0.6));
+}
+
+.game-board--tube-ice .tube:not(.tube--valid):not(.tube--invalid):not(.tube--complete) .tube__glass {
+  background: linear-gradient(
+    90deg,
+    rgba(200, 235, 255, 0.12) 0%,
+    rgba(230, 248, 255, 0.24) 30%,
+    rgba(200, 235, 255, 0.1) 100%
+  );
+  border-left-color: rgba(200, 240, 255, 0.55);
+  border-right-color: rgba(200, 240, 255, 0.55);
+}
+
+.game-board--tube-ice .tube:not(.tube--complete) .tube__rim {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.85), rgba(180, 230, 255, 0.4));
+}
+
+.game-board--tube-ice .tube:not(.tube--complete) .tube__base {
+  background: linear-gradient(180deg, rgba(160, 220, 255, 0.55), rgba(40, 80, 130, 0.9));
+}
+
+.game-board--tube-gold .tube:not(.tube--valid):not(.tube--invalid):not(.tube--complete) .tube__glass {
+  border-left-color: rgba(255, 210, 110, 0.75);
+  border-right-color: rgba(255, 210, 110, 0.75);
+  box-shadow:
+    0 0 8px rgba(255, 200, 80, 0.2),
+    inset 0 0 20px rgba(0, 0, 0, 0.25),
+    inset 2px 0 8px rgba(255, 220, 140, 0.12);
+}
+
+.game-board--tube-gold .tube:not(.tube--complete) .tube__rim {
+  background: linear-gradient(180deg, #fff1b8, #d9a520);
+  box-shadow: 0 -1px 6px rgba(255, 200, 80, 0.5);
+}
+
+.game-board--tube-gold .tube:not(.tube--complete) .tube__base {
+  background: linear-gradient(180deg, #e8b83a, #7a5410);
+}
+
 /* "+N" floating up from the tube — positioned relative to the glass */
 .tube__glass {
   position: relative;

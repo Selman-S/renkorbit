@@ -1,4 +1,4 @@
-import { loadCoins } from './coins';
+import { addCoins, loadCoins } from './coins';
 import { getBestDailyStreak } from './daily';
 import { loadEndlessBest } from './endless';
 import {
@@ -17,25 +17,31 @@ export interface Achievement {
   title: string;
   description: string;
   emoji: string;
+  /** One-time coin reward paid on unlock */
+  reward: number;
 }
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: 'first_win', title: 'İlk Zafer', description: 'İlk adımı tamamla', emoji: '🏁' },
-  { id: 'three_steps', title: 'Yörünge Keşfi', description: '3 adımı tamamla', emoji: '🛸' },
-  { id: 'journey_half', title: 'Yarı Yol', description: '15 adımı tamamla', emoji: '🌓' },
-  { id: 'all_journey', title: 'Galaksi Ustası', description: 'Tüm 30 adımı bitir', emoji: '👑' },
-  { id: 'three_stars', title: 'Mükemmel', description: 'Bir adımda 3 yıldız kazan', emoji: '⭐' },
-  { id: 'five_perfect', title: 'Yıldız Avcısı', description: '5 adımda 3 yıldız', emoji: '🌟' },
-  { id: 'combo_5', title: 'Combo Ustası', description: 'Tek oyunda ×5 combo', emoji: '🔥' },
-  { id: 'tier_4', title: 'Küçük Usta', description: '4×4 adımlarını tamamla', emoji: '🌍' },
-  { id: 'tier_8', title: 'Büyük Usta', description: '8×8 adımlarını tamamla', emoji: '🌟' },
-  { id: 'tier_12', title: 'Galaksi Ustası II', description: '12×12 adımlarını tamamla', emoji: '🚀' },
-  { id: 'coins_200', title: 'Zengin Gezgin', description: '200 coin biriktir', emoji: '🪙' },
-  { id: 'collector', title: 'Koleksiyoncu', description: '3 mağaza ürünü edin', emoji: '💎' },
-  { id: 'daily_first', title: 'Günün Gezgini', description: 'İlk günlük bulmacayı çöz', emoji: '📅' },
-  { id: 'streak_7', title: 'Haftalık Yörünge', description: '7 günlük seri yap', emoji: '🔥' },
-  { id: 'endless_10', title: 'Sonsuz Gezgin', description: 'Sonsuz modda 10 aşama geç', emoji: '♾️' },
+  { id: 'first_win', title: 'İlk Zafer', description: 'İlk adımı tamamla', emoji: '🏁', reward: 20 },
+  { id: 'three_steps', title: 'Yörünge Keşfi', description: '3 adımı tamamla', emoji: '🛸', reward: 30 },
+  { id: 'journey_half', title: 'Yarı Yol', description: '15 adımı tamamla', emoji: '🌓', reward: 100 },
+  { id: 'all_journey', title: 'Galaksi Ustası', description: 'Tüm 30 adımı bitir', emoji: '👑', reward: 300 },
+  { id: 'three_stars', title: 'Mükemmel', description: 'Bir adımda 3 yıldız kazan', emoji: '⭐', reward: 30 },
+  { id: 'five_perfect', title: 'Yıldız Avcısı', description: '5 adımda 3 yıldız', emoji: '🌟', reward: 80 },
+  { id: 'combo_5', title: 'Combo Ustası', description: 'Tek oyunda ×5 combo', emoji: '🔥', reward: 50 },
+  { id: 'tier_4', title: 'Küçük Usta', description: '4×4 adımlarını tamamla', emoji: '🌍', reward: 40 },
+  { id: 'tier_8', title: 'Büyük Usta', description: '8×8 adımlarını tamamla', emoji: '🌟', reward: 100 },
+  { id: 'tier_12', title: 'Galaksi Ustası II', description: '12×12 adımlarını tamamla', emoji: '🚀', reward: 250 },
+  { id: 'coins_200', title: 'Zengin Gezgin', description: '200 coin biriktir', emoji: '🪙', reward: 20 },
+  { id: 'collector', title: 'Koleksiyoncu', description: '3 mağaza ürünü edin', emoji: '💎', reward: 50 },
+  { id: 'daily_first', title: 'Günün Gezgini', description: 'İlk günlük bulmacayı çöz', emoji: '📅', reward: 30 },
+  { id: 'streak_7', title: 'Haftalık Yörünge', description: '7 günlük seri yap', emoji: '🔥', reward: 150 },
+  { id: 'endless_10', title: 'Sonsuz Gezgin', description: 'Sonsuz modda 10 aşama geç', emoji: '♾️', reward: 150 },
 ];
+
+export function getAchievementRewardTotal(ids: string[]): number {
+  return ids.reduce((sum, id) => sum + (getAchievementById(id)?.reward ?? 0), 0);
+}
 
 export interface WinAchievementContext {
   stars: StarCount;
@@ -123,7 +129,10 @@ function shouldUnlock(id: string, win?: WinAchievementContext): boolean {
   }
 }
 
-/** Evaluate rules and unlock new badges; returns newly unlocked ids */
+/**
+ * Evaluate rules, unlock new badges and pay their coin rewards.
+ * Returns newly unlocked ids (rewards are already credited).
+ */
 export function checkAchievements(win?: WinAchievementContext): string[] {
   const unlocked = loadUnlocked();
   const newlyUnlocked: string[] = [];
@@ -135,8 +144,16 @@ export function checkAchievements(win?: WinAchievementContext): string[] {
     newlyUnlocked.push(achievement.id);
   }
 
-  if (newlyUnlocked.length > 0) saveUnlocked(unlocked);
+  if (newlyUnlocked.length > 0) {
+    saveUnlocked(unlocked);
+    addCoins(getAchievementRewardTotal(newlyUnlocked));
+  }
   return newlyUnlocked;
+}
+
+/** Ids already unlocked — used by the one-time reward backfill */
+export function getUnlockedIds(): string[] {
+  return [...loadUnlocked()];
 }
 
 export function isAchievementUnlocked(id: string): boolean {

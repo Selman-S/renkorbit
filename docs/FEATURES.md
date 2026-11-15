@@ -163,15 +163,25 @@ Hedefler adım başına `journeyBonusTargets.ts` playtest eğrisinden gelir.
 
 ### Orbit Coin
 - Kazanma, yıldız, combo, rekor bonusları
+- Günlük seri bonusu + seri ödülleri, sonsuz mod koşu ödülü
+- **Rozet ödülleri** (tek sefer, 20–300) ve **rütbe ödülleri** (50 / 100 / 200 / 500)
 - Mağazada harcanır
 
-### Mağaza
-- Top skinleri, arka plan temaları
-- Equip / satın al
+### Mağaza (toplam 3300 coin)
 
-### Başarımlar (12 rozet)
-- Yolculuk ilerlemesi, yıldız, combo, süreli kazanma, coin, mağaza vb.
-- Profil ekranında grid
+| Sekme | Ürünler |
+|-------|---------|
+| Toplar | Klasik (ücretsiz), Mat 100, Neon 150, Kristal 200 |
+| Tüpler | Cam (ücretsiz), Neon 300, Buz 400, Altın 600 |
+| Temalar | Kozmik (ücretsiz), Nebula 250, Aurora 250, Gün Batımı 450, Derin Uzay 600 |
+
+- Her ürünün gerçek ön izlemesi (top, mini tüp, tema rengi)
+- Tüp skinleri sadece renk/ışık değiştirir; tahta boyutu değişmez
+- Yeni temalar CSS ile üretilir (görsel dosyası yok)
+
+### Başarımlar (15 rozet)
+- Yolculuk ilerlemesi, yıldız, combo, coin, mağaza, günlük seri, sonsuz mod
+- Her rozetin coin ödülü Profil'de görünür
 
 ### İstatistikler
 - Kombinasyon bazlı galibiyet, en iyi skor, combo
@@ -236,6 +246,7 @@ src/
 | Haptik + yeni ses motoru | ✅ |
 | Günün bulmacası + seri + günlük tablo | ✅ |
 | Sonsuz mod (hamle limitli koşu) | ✅ |
+| Rozet/rütbe coin ödülleri, tüp skinleri, CSS temaları | ✅ |
 | Sürükle-bırak + animasyon | ✅ |
 | Combo + patlama FX | ✅ |
 | Gizli süre + bitiş bonusu | ✅ |

@@ -1,3 +1,4 @@
+import { addCoins } from './coins';
 import { getCompletedCount, PROGRESSION_STEPS } from './progressionMap';
 
 const RANK_TIER_KEY = 'renkorbit_rank_tier';
@@ -9,6 +10,8 @@ export interface PlayerRank {
   emoji: string;
   minSteps: number;
   tagline: string;
+  /** One-time coin reward on promotion (0 for the starting rank) */
+  reward: number;
 }
 
 /** Five ranks — swap titles here if player picks another name set */
@@ -20,6 +23,7 @@ export const PLAYER_RANKS: PlayerRank[] = [
     emoji: '🌱',
     minSteps: 0,
     tagline: 'Galaksi yolculuğunun başlangıcı',
+    reward: 0,
   },
   {
     id: 'orbiter',
@@ -28,6 +32,7 @@ export const PLAYER_RANKS: PlayerRank[] = [
     emoji: '🪐',
     minSteps: 3,
     tagline: 'Mini yörünge tamamlandı',
+    reward: 50,
   },
   {
     id: 'meteor',
@@ -36,6 +41,7 @@ export const PLAYER_RANKS: PlayerRank[] = [
     emoji: '☄️',
     minSteps: 9,
     tagline: 'Orta seviye galaksi yolu fethedildi',
+    reward: 100,
   },
   {
     id: 'captain',
@@ -44,6 +50,7 @@ export const PLAYER_RANKS: PlayerRank[] = [
     emoji: '🛸',
     minSteps: 18,
     tagline: 'Büyük yörüngelerin ustası',
+    reward: 200,
   },
   {
     id: 'galaxy',
@@ -52,8 +59,14 @@ export const PLAYER_RANKS: PlayerRank[] = [
     emoji: '👑',
     minSteps: PROGRESSION_STEPS.length,
     tagline: 'Tüm 30 adım tamamlandı',
+    reward: 500,
   },
 ];
+
+/** Sum of promotion rewards for every rank up to and including `tier` */
+export function getRankRewardsUpTo(tier: number): number {
+  return PLAYER_RANKS.filter((r) => r.tier <= tier).reduce((sum, r) => sum + r.reward, 0);
+}
 
 export function getRankForCompletedSteps(completedSteps: number): PlayerRank {
   let rank = PLAYER_RANKS[0];
@@ -90,19 +103,25 @@ function saveHighestRankTier(tier: number): void {
   }
 }
 
-/** Silent sync for existing saves — no promotion popup */
+/** Silent sync for existing saves — no popup, but skipped tiers still pay */
 export function migratePlayerRank(): void {
   const current = getPlayerRank();
   const stored = loadHighestRankTier();
-  if (current.tier > stored) saveHighestRankTier(current.tier);
+  if (current.tier <= stored) return;
+  saveHighestRankTier(current.tier);
+  addCoins(getRankRewardsUpTo(current.tier) - getRankRewardsUpTo(stored));
 }
 
-/** After a journey win — returns new rank if player just promoted */
+/**
+ * After a journey win — returns the new rank if the player just promoted.
+ * Pays every skipped tier's reward too (e.g. jumping from tier 2 to 4).
+ */
 export function checkRankPromotion(): PlayerRank | null {
   const current = getPlayerRank();
   const stored = loadHighestRankTier();
   if (current.tier <= stored) return null;
   saveHighestRankTier(current.tier);
+  addCoins(getRankRewardsUpTo(current.tier) - getRankRewardsUpTo(stored));
   return current;
 }
 

@@ -217,3 +217,14 @@
   color: var(--text-dim);
   line-height: 1.3;
 }
+
+.profile__reward {
+  margin-top: 3px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: rgba(255, 229, 102, 0.55);
+}
+
+.profile__reward--earned {
+  color: #7dffb8;
+}

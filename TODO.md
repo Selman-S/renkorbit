@@ -76,7 +76,7 @@
 - [x] Günlük tablo: Supabase `daily_scores` (insert-only RLS), liderlik tablosunda "📅 Bugün" sekmesi
 - [x] Wordle tarzı sonuç paylaşımı + `?daily=1` linki
 - [x] Rozetler: Günün Gezgini, Haftalık Yörünge (7 gün)
-- [ ] **Supabase'de `supabase/daily_scores.sql` çalıştırılmalı** (tablo henüz yok)
+- [x] Supabase'de `daily_scores` tablosu kuruldu (16 Kasım 2026; okuma ok, eski tarih insert'i RLS ile reddediliyor)
 
 ### Sonsuz mod (Faz 3, Kasım 2026)
 - [x] Koşu: aşama 1 = 4×4 sıralı, sonra karışık; her 2 aşamada +1 renk, 12'de tavan
@@ -88,13 +88,24 @@
 - [ ] Online sonsuz mod tablosu (`endless_runs`) — istenirse
 - [ ] Aşama 15+ zorluk platosu (12×12, limit ×1.5 sabit) — oyuncu verisine göre ayarla
 
+### Ödüller ve mağaza (Faz 4, Kasım 2026)
+- [x] Her rozet tek seferlik coin verir (20–300); Profil'de ödül görünür, kazanma ekranında "+X 🪙"
+- [x] Rütbe atlama ödülü 50/100/200/500 (atlanan basamaklar da ödenir); RankUpModal'da gösterilir
+- [x] Eski kayıtlar için bir kerelik geriye dönük ödeme (`renkorbit_rewards_backfill_v1`)
+- [x] Mağazaya "Tüpler" sekmesi: Neon 300, Buz 400, Altın 600 (sadece renk/glow, boyut değişmez)
+- [x] CSS temaları: Gün Batımı 450, Derin Uzay 600 (görsel dosyası yok)
+- [x] Mağazada gerçek ön izleme (top, mini tüp, tema renk örneği); toplam harcama alanı 950 → 3300 coin
+- [x] `public/backgrounds/cosmic1.jpg` (filigranlı stok görsel, kullanılmıyordu) silindi
+- [x] Düzeltme: kazanma ekranından "Sıralama" açılınca tablo modalın arkasında kalıyordu
+- Bilerek yapılmadı: günlük giriş ödülü (günlük bulmaca serisi aynı işi oynatarak yapıyor), gizli top modu (ayrı tasarım/denge işi)
+
 ---
 
 ## Kalan (bilinen)
 
-### Faz 4
-- [ ] Başarımlara coin ödülü, tüp skin / arka plan, günlük giriş
-- [ ] Supabase RLS sıkılaştırma (`signInAnonymously` + `auth.uid()`)
+### Sonrası
+- [ ] Supabase RLS sıkılaştırma (`signInAnonymously` + `auth.uid()`) — `leaderboard` hâlâ herkese yazılabilir
+- [ ] Haftalık lig sezonları (ayrı karar)
 
 ### Polish
 - [ ] Cross-tube top animasyonu (ball ID)

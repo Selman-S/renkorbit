@@ -518,14 +518,22 @@ function App() {
   useEffect(() => {
     if (!usernameReady) return;
     migratePlayerRank();
-    if (!migration.scoringReset) return;
-    void syncLeaderboardScore(0);
-    const timer = window.setTimeout(
-      () => showShareToast('Puanlama yenilendi — puanlar sıfırlandı, yolculuk ilerlemen korundu'),
-      400,
+    if (migration.scoringReset) void syncLeaderboardScore(0);
+
+    const notices: string[] = [];
+    if (migration.scoringReset) {
+      notices.push('Puanlama yenilendi — puanlar sıfırlandı, yolculuk ilerlemen korundu');
+    }
+    if (migration.backfillCoins > 0) {
+      notices.push(`Kazandığın rozet ve rütbeler için +${migration.backfillCoins} 🪙`);
+    }
+    if (notices.length === 0) return;
+
+    const timers = notices.map((text, i) =>
+      window.setTimeout(() => showShareToast(text), 400 + i * 2600),
     );
-    return () => window.clearTimeout(timer);
-  }, [usernameReady, migration.scoringReset, showShareToast]);
+    return () => timers.forEach((t) => window.clearTimeout(t));
+  }, [usernameReady, migration.scoringReset, migration.backfillCoins, showShareToast]);
 
   useEffect(() => {
     if (!usernameReady || shareLaunched.current) return;
@@ -690,6 +698,7 @@ function App() {
               disabled={state.status !== 'playing' || showTutorial}
               canDrop={canDrop}
               ballSkin={inventory.equippedBallSkin}
+              tubeSkin={inventory.equippedTubeSkin}
               tubeScores={state.tubeScores}
               celebrate={state.status === 'won'}
               onBallMove={moveBalls}
@@ -709,9 +718,10 @@ function App() {
               earnedTotalCredit={earnedTotalCredit}
               showNextStep={showNextStep}
               onNextStep={startNextJourneyStep}
-              newAchievements={newAchievements.map(
-                (id) => getAchievementById(id)?.title ?? id,
-              )}
+              newAchievements={newAchievements.map((id) => {
+                const badge = getAchievementById(id);
+                return badge ? `${badge.title} (+${badge.reward} 🪙)` : id;
+              })}
               onPlayAgain={restartBoard}
               onMenu={handleMenu}
               onShare={state.endlessStage === null ? handleSharePuzzle : undefined}
@@ -754,7 +764,7 @@ function App() {
             open={showScoreboard}
             onClose={() => setShowScoreboard(false)}
             refreshKey={scoreRefreshKey}
-            overlay="transparent"
+            overlay={state.status === 'won' ? 'dimmed' : 'transparent'}
             anchor="contained"
             tab={scoreboardTab}
             onTabChange={setScoreboardTab}

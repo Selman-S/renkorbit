@@ -4,6 +4,10 @@
  * is wiped once. Journey progress, stars, coins and cosmetics are kept.
  */
 
+import { getAchievementRewardTotal, getUnlockedIds } from './achievements';
+import { addCoins } from './coins';
+import { getRankRewardsUpTo, loadHighestRankTier } from './ranks';
+
 const VERSION_KEY = 'renkorbit_scoring_version';
 const SCORING_VERSION = 2;
 
@@ -11,8 +15,29 @@ const SCORE_PREFIXES = ['renkorbit_best_'];
 const SCORE_KEYS = ['renkorbit_total_score', 'renkorbit_score_history'];
 const STATS_KEY = 'renkorbit_stats';
 
+const REWARDS_BACKFILL_KEY = 'renkorbit_rewards_backfill_v1';
+
 export interface MigrationResult {
   scoringReset: boolean;
+  /** Coins paid once for badges/ranks earned before rewards existed */
+  backfillCoins: number;
+}
+
+/**
+ * Badges and ranks started paying coins in Faz 4. Players who earned them
+ * earlier get the sum once. Fresh installs have nothing unlocked → 0.
+ */
+function backfillRewards(): number {
+  try {
+    if (localStorage.getItem(REWARDS_BACKFILL_KEY)) return 0;
+    const coins =
+      getAchievementRewardTotal(getUnlockedIds()) + getRankRewardsUpTo(loadHighestRankTier());
+    if (coins > 0) addCoins(coins);
+    localStorage.setItem(REWARDS_BACKFILL_KEY, '1');
+    return coins;
+  } catch {
+    return 0;
+  }
 }
 
 function readVersion(): number {
@@ -87,5 +112,5 @@ export function runStorageMigrations(): MigrationResult {
     /* ignore */
   }
 
-  return { scoringReset };
+  return { scoringReset, backfillCoins: backfillRewards() };
 }
