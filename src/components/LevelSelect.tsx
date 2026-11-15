@@ -13,10 +13,11 @@ import {
 import { usePwaInstall } from '../hooks/usePwaInstall';
 import { getPlayerRank } from '../game/ranks';
 import { getStarThresholds } from '../game/stars';
+import { DailyCard } from './DailyCard';
 import { InstallAppModal } from './InstallAppModal';
 import { RankBadge } from './RankBadge';
 import { Profile } from './Profile';
-import { Scoreboard } from './Scoreboard';
+import { Scoreboard, type ScoreboardTab } from './Scoreboard';
 import { Shop } from './Shop';
 import { Statistics } from './Statistics';
 import { ShareGameSheet } from './ShareGameSheet';
@@ -43,6 +44,10 @@ interface LevelSelectProps {
   onOpenStatistics?: () => void;
   onUsernameChange?: (name: string) => void;
   onShareToast?: (message: string) => void;
+  onStartDaily?: () => void;
+  onOpenDailyBoard?: () => void;
+  scoreboardTab?: ScoreboardTab;
+  onScoreboardTabChange?: (tab: ScoreboardTab) => void;
 }
 
 export function LevelSelect({
@@ -65,6 +70,10 @@ export function LevelSelect({
   onOpenStatistics,
   onUsernameChange,
   onShareToast,
+  onStartDaily,
+  onOpenDailyBoard,
+  scoreboardTab = 'all',
+  onScoreboardTabChange,
 }: LevelSelectProps) {
   void journeyRefreshKey;
 
@@ -175,6 +184,9 @@ export function LevelSelect({
 
       <div className="level-select__scroll">
         <div className="level-select__scroll-inner">
+          {onStartDaily && onOpenDailyBoard && (
+            <DailyCard onPlay={onStartDaily} onOpenBoard={onOpenDailyBoard} />
+          )}
           <p className="level-select__section-title">Galaksi yolu</p>
 
           <ol className="journey-path">
@@ -301,6 +313,8 @@ export function LevelSelect({
           refreshKey={scoreRefreshKey}
           overlay="transparent"
           anchor="contained"
+          tab={scoreboardTab}
+          onTabChange={onScoreboardTabChange}
         />
       )}
 

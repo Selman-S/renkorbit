@@ -7,6 +7,14 @@ import { useCountUp } from '../hooks/useCountUp';
 import { StarRow } from './StarRow';
 import './WinModal.css';
 
+/** Extra win context when the board was the daily puzzle */
+export interface DailyWinInfo {
+  firstClear: boolean;
+  streak: number;
+  milestoneDays: number | null;
+  milestoneCoins: number;
+}
+
 interface WinModalProps {
   state: GameState;
   /** Parent delays this past the win so the last tube FX can play */
@@ -26,6 +34,8 @@ interface WinModalProps {
   onMenu: () => void;
   onShare?: () => void;
   onStarReveal?: (index: number) => void;
+  dailyInfo?: DailyWinInfo | null;
+  onOpenDailyBoard?: () => void;
 }
 
 /** 0 title · 1 stars · 2 score rows · 3 badges + actions */
@@ -55,6 +65,8 @@ export function WinModal({
   onMenu,
   onShare,
   onStarReveal,
+  dailyInfo = null,
+  onOpenDailyBoard,
 }: WinModalProps) {
   return (
     <AnimatePresence>
@@ -82,6 +94,8 @@ export function WinModal({
             onMenu={onMenu}
             onShare={onShare}
             onStarReveal={onStarReveal}
+            dailyInfo={dailyInfo}
+            onOpenDailyBoard={onOpenDailyBoard}
           />
         </motion.div>
       )}
@@ -108,6 +122,8 @@ function WinCard({
   onMenu,
   onShare,
   onStarReveal,
+  dailyInfo = null,
+  onOpenDailyBoard,
 }: WinCardProps) {
   const breakdown = calculateScoreBreakdown(
     state.comboScore,
@@ -134,6 +150,7 @@ function WinCard({
   const shownTotal = useCountUp(stage >= 2 ? breakdown.finalScore : 0, 700);
 
   const replayNoGain = earnedTotalCredit === 0 && earnedCoins === 0;
+  const isDaily = dailyInfo !== null;
 
   return (
           <motion.div
@@ -191,7 +208,34 @@ function WinCard({
             </div>
 
             <AnimatePresence>
-              {stage >= 3 && isNewRecord && (
+              {stage >= 3 && dailyInfo?.firstClear && (
+                <motion.div
+                  key="streak"
+                  className="win-modal__streak"
+                  initial={{ opacity: 0, scale: 0.6 }}
+                  animate={{ opacity: 1, scale: [0.6, 1.12, 1] }}
+                  transition={{ duration: 0.45, ease: 'easeOut' }}
+                >
+                  <span className="win-modal__streak-flame" aria-hidden>
+                    🔥
+                  </span>
+                  <span>
+                    <strong>{dailyInfo.streak}</strong> günlük seri
+                  </span>
+                </motion.div>
+              )}
+              {stage >= 3 && dailyInfo?.milestoneDays && (
+                <motion.div
+                  key="milestone"
+                  className="win-modal__badge"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 24, delay: 0.12 }}
+                >
+                  🎉 {dailyInfo.milestoneDays} gün ödülü +{dailyInfo.milestoneCoins} 🪙
+                </motion.div>
+              )}
+              {stage >= 3 && isNewRecord && !isDaily && (
                 <motion.div
                   key="record"
                   className="win-modal__badge"
@@ -290,15 +334,26 @@ function WinCard({
                         <strong>+{earnedCoins} 🪙</strong>
                       </motion.div>
                     )}
-                    {replayNoGain && (
+                    {isDaily && !dailyInfo?.firstClear ? (
                       <motion.div
-                        key="nogain"
+                        key="daily-replay"
                         className="win-modal__row win-modal__row--hint"
                         {...rowMotion}
                         transition={{ duration: 0.25 }}
                       >
-                        <span>Rekoru geçersen puan ve coin kazanırsın</span>
+                        <span>Günlük tabloda ilk bitirişin sayılır</span>
                       </motion.div>
+                    ) : (
+                      replayNoGain && (
+                        <motion.div
+                          key="nogain"
+                          className="win-modal__row win-modal__row--hint"
+                          {...rowMotion}
+                          transition={{ duration: 0.25 }}
+                        >
+                          <span>Rekoru geçersen puan ve coin kazanırsın</span>
+                        </motion.div>
+                      )
                     )}
                     {state.maxCombo >= 2 && (
                       <motion.div
@@ -346,13 +401,17 @@ function WinCard({
             >
               {onShare && (
                 <button type="button" className="win-modal__btn win-modal__btn--share" onClick={onShare}>
-                  Paylaş
+                  {isDaily ? 'Sonucu paylaş' : 'Paylaş'}
                 </button>
               )}
               <button type="button" className="win-modal__btn" onClick={onMenu}>
                 Menü
               </button>
-              {showNextStep && onNextStep ? (
+              {isDaily && onOpenDailyBoard ? (
+                <button type="button" className="win-modal__btn win-modal__btn--primary" onClick={onOpenDailyBoard}>
+                  Sıralama
+                </button>
+              ) : showNextStep && onNextStep ? (
                 <button type="button" className="win-modal__btn win-modal__btn--primary" onClick={onNextStep}>
                   Sonraki adım
                 </button>

@@ -79,6 +79,29 @@
   font-weight: 600;
 }
 
+.win-modal__streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 10px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: #ffe3b0;
+  background: linear-gradient(135deg, rgba(255, 120, 0, 0.25), rgba(255, 60, 120, 0.2));
+  border: 1px solid rgba(255, 170, 60, 0.45);
+  box-shadow: 0 4px 16px rgba(255, 120, 0, 0.25);
+}
+
+.win-modal__streak strong {
+  font-size: 1.05rem;
+  color: #fff;
+}
+
+.win-modal__streak-flame {
+  font-size: 1.15rem;
+}
+
 .win-modal__row--credit strong {
   color: var(--accent-gold);
 }

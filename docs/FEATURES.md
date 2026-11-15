@@ -53,6 +53,17 @@ Mobil ve tablet odaklı web tabanlı renk sıralama bulmacası.
 - Her adım için yıldız kaydı; açık adımın kartında 3★ hedefi görünür
 - Kazanma sonrası **Sonraki adım** butonu
 
+### 2.1 Günün Bulmacası
+
+- Her gün herkes için **aynı** tahta (tarih seed'li), cihazın yerel gününe göre
+- Zorluk haftanın gününe göre: Pzt-Sal 5, Çar-Per 6, Cum-Cmt 7, Paz 8 renk (karışık)
+- İlk yolculuk adımı tamamlanınca açılır; menüde yolun üstünde kart
+- **Seri 🔥:** ardışık günlerde +1, bir gün kaçarsa sıfırlanır
+- Coin: normal kazanç + `min(seri, 10) × 5`; 3/7/14/30. günde ek ödül (50/150/300/600)
+- **Günlük tablo:** sadece günün ilk bitirişi sayılır (puan ↓, hamle ↑, süre ↑)
+- Tekrar oynanabilir ama seri, coin ve tablo değişmez
+- **Sonuç paylaşımı:** `RenkOrbit Günlük #N · ★★☆ · 40 hamle · 🔥 5` + `?daily=1` linki
+
 ---
 
 ## 3. Kontroller & UI
@@ -213,6 +224,7 @@ src/
 | Anti-farm (tekrar oyunda sadece rekor farkı) | ✅ |
 | Usta: 3 geri alma | ✅ |
 | Haptik + yeni ses motoru | ✅ |
+| Günün bulmacası + seri + günlük tablo | ✅ |
 | Sürükle-bırak + animasyon | ✅ |
 | Combo + patlama FX | ✅ |
 | Gizli süre + bitiş bonusu | ✅ |

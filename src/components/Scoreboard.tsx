@@ -6,8 +6,11 @@ import { getGlobalRankRange, getLeagueMeta, LEAGUE_SIZE } from '../game/leagues'
 import { getPlayerRank } from '../game/ranks';
 import { loadTotalScore } from '../game/scoring';
 import { loadUsername } from '../game/storage';
+import { DailyBoard } from './DailyBoard';
 import { ModalCard } from './ModalCard';
 import './Scoreboard.css';
+
+export type ScoreboardTab = 'daily' | 'all';
 
 interface ScoreboardProps {
   open: boolean;
@@ -15,6 +18,8 @@ interface ScoreboardProps {
   refreshKey?: number;
   overlay?: 'dimmed' | 'transparent';
   anchor?: 'fixed' | 'contained';
+  tab?: ScoreboardTab;
+  onTabChange?: (tab: ScoreboardTab) => void;
 }
 
 export function Scoreboard({
@@ -23,6 +28,8 @@ export function Scoreboard({
   refreshKey = 0,
   overlay = 'dimmed',
   anchor = 'fixed',
+  tab = 'all',
+  onTabChange,
 }: ScoreboardProps) {
   const [board, setBoard] = useState<LeagueBoardResult | null>(null);
   const [viewLeagueIndex, setViewLeagueIndex] = useState(0);
@@ -33,7 +40,7 @@ export function Scoreboard({
   void refreshKey;
 
   useEffect(() => {
-    if (!open) {
+    if (!open || tab !== 'all') {
       tabPicked.current = false;
       return;
     }
@@ -63,17 +70,17 @@ export function Scoreboard({
         setViewLeagueIndex(0);
       })
       .finally(() => setLoading(false));
-  }, [open, refreshKey]);
+  }, [open, refreshKey, tab]);
 
   useEffect(() => {
-    if (!open || offline || !tabPicked.current) return;
+    if (!open || tab !== 'all' || offline || !tabPicked.current) return;
 
     setLoading(true);
     void fetchLeagueBoard(viewLeagueIndex)
       .then(setBoard)
       .catch(() => setBoard(null))
       .finally(() => setLoading(false));
-  }, [viewLeagueIndex, open, offline]);
+  }, [viewLeagueIndex, open, offline, tab]);
 
   const handleLeagueTab = (index: number) => {
     tabPicked.current = true;
@@ -96,13 +103,37 @@ export function Scoreboard({
       overlay={overlay}
       anchor={anchor}
       subtitle={
-        board && board.totalPlayers > 0 ? (
+        tab === 'all' && board && board.totalPlayers > 0 ? (
           <p className="scoreboard__subtitle">
             {board.totalPlayers} oyuncu · {board.totalLeagues} lig · {LEAGUE_SIZE}&apos;şer grup
           </p>
         ) : undefined
       }
     >
+      <div className="scoreboard__mode" role="tablist" aria-label="Tablo seç">
+        {(
+          [
+            ['daily', '📅 Bugün'],
+            ['all', '👑 Tüm zamanlar'],
+          ] as const
+        ).map(([id, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={tab === id}
+            className={`scoreboard__mode-btn${tab === id ? ' scoreboard__mode-btn--active' : ''}`}
+            onClick={() => onTabChange?.(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'daily' ? (
+        <DailyBoard key={refreshKey} />
+      ) : (
+        <>
       {offline && (
         <p className="scoreboard__hint">Çevrimdışı mod — yalnızca senin skorun gösteriliyor.</p>
       )}
@@ -200,6 +231,8 @@ export function Scoreboard({
             );
           })}
         </ul>
+      )}
+        </>
       )}
     </ModalCard>
   );

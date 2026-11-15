@@ -1,4 +1,5 @@
 import { loadCoins } from './coins';
+import { getBestDailyStreak } from './daily';
 import {
   getColorTierStepRange,
   getCompletedCount,
@@ -30,6 +31,8 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'tier_12', title: 'Galaksi Ustası II', description: '12×12 adımlarını tamamla', emoji: '🚀' },
   { id: 'coins_200', title: 'Zengin Gezgin', description: '200 coin biriktir', emoji: '🪙' },
   { id: 'collector', title: 'Koleksiyoncu', description: '3 mağaza ürünü edin', emoji: '💎' },
+  { id: 'daily_first', title: 'Günün Gezgini', description: 'İlk günlük bulmacayı çöz', emoji: '📅' },
+  { id: 'streak_7', title: 'Haftalık Yörünge', description: '7 günlük seri yap', emoji: '🔥' },
 ];
 
 export interface WinAchievementContext {
@@ -107,6 +110,10 @@ function shouldUnlock(id: string, win?: WinAchievementContext): boolean {
       return loadCoins() >= 200;
     case 'collector':
       return countPurchasedItems() >= 3;
+    case 'daily_first':
+      return getBestDailyStreak() >= 1;
+    case 'streak_7':
+      return getBestDailyStreak() >= 7;
     default:
       return false;
   }

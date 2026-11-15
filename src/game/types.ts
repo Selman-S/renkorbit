@@ -38,6 +38,8 @@ export interface GameState {
   gameKey: string;
   isJourney: boolean;
   journeyStep: number | null;
+  /** YYYY-MM-DD when playing the daily puzzle, else null */
+  dailyDate: string | null;
   config: LevelConfig;
   columns: Column[];
   moves: number;
@@ -70,6 +72,7 @@ export type GameAction =
       settings: GameSettings;
       seed?: number;
       journeyStep?: number;
+      dailyDate?: string;
     }
   | { type: 'CLEAR_SHAKE' }
   | { type: 'CLEAR_COMBO_POPS' }

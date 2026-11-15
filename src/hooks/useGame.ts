@@ -43,8 +43,8 @@ export function useGame(
   }, []);
 
   const setGame = useCallback(
-    (settings: GameSettings, seed?: number, journeyStep?: number) => {
-      dispatch({ type: 'SET_GAME', settings, seed, journeyStep });
+    (settings: GameSettings, seed?: number, journeyStep?: number, dailyDate?: string) => {
+      dispatch({ type: 'SET_GAME', settings, seed, journeyStep, dailyDate });
     },
     [],
   );

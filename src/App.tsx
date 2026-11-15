@@ -3,15 +3,27 @@ import { GameBoard } from './components/GameBoard';
 import { GameControls } from './components/GameControls';
 import { HUD } from './components/HUD';
 import { LevelSelect } from './components/LevelSelect';
-import { Scoreboard } from './components/Scoreboard';
+import { Scoreboard, type ScoreboardTab } from './components/Scoreboard';
 import { UsernamePrompt } from './components/UsernamePrompt';
 import { TutorialOverlay } from './components/TutorialOverlay';
 import { TimeUpModal } from './components/TimeUpModal';
 import { ComboBurstLayer, type ComboBurstItem } from './components/ComboBurst';
 import { ShareToast } from './components/ShareToast';
 import { RankUpModal } from './components/RankUpModal';
-import { WinModal } from './components/WinModal';
+import { WinModal, type DailyWinInfo } from './components/WinModal';
 import { DEFAULT_SETTINGS } from './game/levelConfig';
+import {
+  buildDailyShareUrl,
+  getDailyInviteText,
+  getDailyResult,
+  getDailySeed,
+  getDailySettings,
+  getDailyShareText,
+  getDailyStatus,
+  parseDailyFromUrl,
+  recordDailyWin,
+} from './game/daily';
+import { submitDailyScore } from './game/dailyApi';
 import { checkAchievements, getAchievementById } from './game/achievements';
 import { addCoins, calculateReplayCoins, calculateWinCoins } from './game/coins';
 import { runStorageMigrations } from './game/migrations';
@@ -79,6 +91,8 @@ function App() {
   const [comboBursts, setComboBursts] = useState<ComboBurstItem[]>([]);
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [promotedRank, setPromotedRank] = useState<PlayerRank | null>(null);
+  const [dailyWinInfo, setDailyWinInfo] = useState<DailyWinInfo | null>(null);
+  const [scoreboardTab, setScoreboardTab] = useState<ScoreboardTab>('all');
 
   // Freeze the clock whenever the board isn't the thing on screen
   const gamePaused =
@@ -135,8 +149,29 @@ function App() {
     const winCoins = isFirstClear
       ? calculateWinCoins(stars, score, state.maxCombo, newRecord)
       : calculateReplayCoins(newRecord, stars - prevBestStars);
-    addCoins(winCoins);
-    setEarnedCoins(winCoins);
+
+    // Daily: first finish of the day extends the streak and goes to the daily board
+    let dailyBonus = 0;
+    if (state.dailyDate) {
+      const result = { score, moves: state.moves, time: state.elapsedSec, stars };
+      const outcome = recordDailyWin(state.dailyDate, result);
+      dailyBonus = outcome.bonusCoins;
+      setDailyWinInfo({
+        firstClear: outcome.firstClear,
+        streak: outcome.streak,
+        milestoneDays: outcome.milestoneDays,
+        milestoneCoins: outcome.milestoneCoins,
+      });
+      if (outcome.firstClear) {
+        void submitDailyScore(state.dailyDate, result).then(() =>
+          setScoreRefreshKey((n) => n + 1),
+        );
+      }
+    }
+
+    const totalCoins = winCoins + dailyBonus;
+    addCoins(totalCoins);
+    setEarnedCoins(totalCoins);
     setCosmeticsTick((n) => n + 1);
 
     if (state.isJourney && state.journeyStep !== null) {
@@ -155,9 +190,10 @@ function App() {
       stars,
     });
 
+    // Dailies share one stats row instead of one per date
     recordWinStats({
-      gameKey: state.gameKey,
-      label: state.config.label,
+      gameKey: state.dailyDate ? 'daily' : state.gameKey,
+      label: state.dailyDate ? '📅 Günlük bulmaca' : state.config.label,
       score,
       moves: state.moves,
       stars,
@@ -184,6 +220,7 @@ function App() {
     state.settings,
     state.isJourney,
     state.journeyStep,
+    state.dailyDate,
     state.maxCombo,
   ]);
 
@@ -272,6 +309,17 @@ function App() {
   const handleSharePuzzle = useCallback(async () => {
     if (screen !== 'game') return;
     try {
+      if (state.dailyDate) {
+        // Daily: share the result (Wordle-style) once finished, else an invite
+        const url = buildDailyShareUrl();
+        const done = getDailyResult(state.dailyDate);
+        const text = done
+          ? getDailyShareText(state.dailyDate, done, getDailyStatus().streak)
+          : getDailyInviteText(state.dailyDate);
+        const result = await sharePuzzleLink(url, text, `${text}\n${url}`);
+        showShareToast(result === 'shared' ? 'Paylaşıldı!' : 'Sonuç kopyalandı!');
+        return;
+      }
       const url = buildShareUrl(state);
       const result = await sharePuzzleLink(url, getShareMessage(state));
       showShareToast(result === 'shared' ? 'Paylaşıldı!' : 'Link kopyalandı!');
@@ -279,6 +327,11 @@ function App() {
       /* user cancelled native share */
     }
   }, [screen, state, showShareToast]);
+
+  const openScoreboard = useCallback((tab: ScoreboardTab) => {
+    setScoreboardTab(tab);
+    setShowScoreboard(true);
+  }, []);
 
   /** Clear per-round win UI before a new board appears */
   const resetRoundUi = useCallback(() => {
@@ -290,7 +343,23 @@ function App() {
     setNewAchievements([]);
     setComboBursts([]);
     setWinRevealed(false);
+    setDailyWinInfo(null);
   }, []);
+
+  const startDaily = useCallback(() => {
+    const status = getDailyStatus();
+    if (!status.unlocked) {
+      showShareToast('Günün bulmacası ilk adımı tamamlayınca açılır');
+      return;
+    }
+    const settings = getDailySettings(status.today);
+    unlock();
+    setActiveSettings(settings);
+    setGame(settings, getDailySeed(status.today), undefined, status.today);
+    setScreen('game');
+    resetRoundUi();
+    setShowTutorial(false);
+  }, [setGame, unlock, resetRoundUi, showShareToast]);
 
   const startSharedPuzzle = useCallback(
     (payload: SharedPuzzlePayload) => {
@@ -326,12 +395,21 @@ function App() {
 
   useEffect(() => {
     if (!usernameReady || shareLaunched.current) return;
-    const payload = parseShareFromUrl(window.location.search);
+    const search = window.location.search;
+
+    if (parseDailyFromUrl(search)) {
+      shareLaunched.current = true;
+      window.history.replaceState(null, '', window.location.pathname);
+      startDaily();
+      return;
+    }
+
+    const payload = parseShareFromUrl(search);
     if (!payload) return;
     shareLaunched.current = true;
     window.history.replaceState(null, '', window.location.pathname);
     startSharedPuzzle(payload);
-  }, [usernameReady, startSharedPuzzle]);
+  }, [usernameReady, startSharedPuzzle, startDaily]);
 
   useEffect(() => {
     return () => {
@@ -402,7 +480,11 @@ function App() {
       {screen === 'menu' ? (
         <LevelSelect
           onStartStep={startJourneyStep}
-          onOpenLeaderboard={() => setShowScoreboard(true)}
+          onStartDaily={startDaily}
+          onOpenLeaderboard={() => openScoreboard('all')}
+          onOpenDailyBoard={() => openScoreboard('daily')}
+          scoreboardTab={scoreboardTab}
+          onScoreboardTabChange={setScoreboardTab}
           showScoreboard={showScoreboard}
           onCloseScoreboard={() => setShowScoreboard(false)}
           scoreRefreshKey={scoreRefreshKey}
@@ -437,7 +519,7 @@ function App() {
           <HUD
             state={state}
             totalScore={totalScore}
-            onOpenScoreboard={() => setShowScoreboard(true)}
+            onOpenScoreboard={() => openScoreboard(state.dailyDate ? 'daily' : 'all')}
           />
           <main className="app__board">
             <GameBoard
@@ -472,6 +554,8 @@ function App() {
               onPlayAgain={restartBoard}
               onMenu={goMenu}
               onShare={handleSharePuzzle}
+              dailyInfo={dailyWinInfo}
+              onOpenDailyBoard={() => openScoreboard('daily')}
             />
             <TimeUpModal state={state} onRetry={restartBoard} onMenu={goMenu} />
             <TutorialOverlay open={showTutorial} onComplete={completeTutorial} />
@@ -495,6 +579,8 @@ function App() {
             refreshKey={scoreRefreshKey}
             overlay="transparent"
             anchor="contained"
+            tab={scoreboardTab}
+            onTabChange={setScoreboardTab}
           />
         </div>
       )}

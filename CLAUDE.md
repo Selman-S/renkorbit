@@ -40,7 +40,7 @@ React 19, TypeScript 6, Vite 8, framer-motion. Online liderlik tablosu için Sup
   - `storage.ts`: kullanıcı adı, player id, tutorial ve ses ayarı
 - `src/hooks/`: `useGame`, `useBoardLayout`, `useSound`, `usePwaInstall`
 - `src/lib/supabase.ts`: Supabase istemcisi. Env yoksa `null` döner.
-- `supabase/`: `schema.sql`, `reset-leaderboard.sql`
+- `supabase/`: `schema.sql`, `daily_scores.sql`, `reset-leaderboard.sql`
 - `docs/`: FEATURES, ROADMAP, SUPABASE, MOBILE_TEST, PWA_INSTALL. `TODO.md` ve `todos/` görev takibi.
 
 ## Oyun kuralları (değiştirirken dikkat)
@@ -56,10 +56,12 @@ React 19, TypeScript 6, Vite 8, framer-motion. Online liderlik tablosu için Sup
 - **Yıldızlar** (`stars.ts`): eşikler tahta boyutundan değil `journeyBonusTargets` playtest optimumundan türetilir (3★ ≤ ×1.15, 2★ ≤ ×1.6). `calculateStars` ve `getStarThresholds`'a `journeyStep` geçmeyi unutma.
 - **Anti-farm** (`App.tsx` kazanma efekti): tekrar oyunda toplam puana sadece rekor farkı yazılır; coin yalnızca rekor kırınca (`calculateReplayCoins`). Rekorlar `saveBestScore`'dan **önce** okunur.
 - Kazanma modalı 850 ms gecikmeli açılır (`winRevealed`), yeni tahta başlatan her yol `resetRoundUi()` çağırır.
+- **Günlük bulmaca** (`daily.ts`): `GameState.dailyDate` (YYYY-MM-DD, cihazın yerel günü) doluysa oyun günlük moddadır; seed `hashString('renkorbit-daily-v1-' + tarih)`, `gameKey = daily_<tarih>`. `hashString`'i ve seed formatını değiştirme — herkesin aynı tahtayı görmesi buna bağlı. Seri/coin/tablo yalnızca günün **ilk** bitirişinde (`recordDailyWin().firstClear`). Günlük istatistikler tek `daily` satırında toplanır.
+- Günlük tablo `dailyApi.ts` → Supabase `daily_scores` (insert-only). Tablo yoksa `fetchDailyBoard` `available: false` döner; HEAD/count sorguları eksik tabloda hata vermeden `null` döndüğü için varlık kontrolünü normal `select` ile yap.
 
 ## Kalıcılık
 
-- İlerleme `localStorage` üzerinde tutulur. Anahtarlar `renkorbit_` ile başlar: `journey`, `total_score`, `best_*`, `stars_*`, `coins`, `inventory`, `achievements`, `stats`, `score_history`, `rank_tier`, `username`, `player_id`, `tutorial_done`, `sound_muted`, `scoring_version`.
+- İlerleme `localStorage` üzerinde tutulur. Anahtarlar `renkorbit_` ile başlar: `journey`, `total_score`, `best_*`, `stars_*`, `coins`, `inventory`, `achievements`, `stats`, `score_history`, `rank_tier`, `username`, `player_id`, `tutorial_done`, `sound_muted`, `scoring_version`, `daily` (`{lastDate, streak, bestStreak, results}`, son 60 gün).
 - `src/game/migrations.ts` tek seferlik migrasyonları tutar (`runStorageMigrations`, App'te lazy `useState` ile ilk render'dan önce çalışır). Puan formülünü değiştirirsen `SCORING_VERSION`'ı artır.
 - Ses `useSound.play(event, level)` ile; `level` olaya göre yığın yüksekliği / combo seviyesi / yıldız indeksi. Haptik `src/lib/haptics.ts`, mute'tan bağımsız.
 - `localStorage` erişimi her zaman `try/catch` içindedir (gizli mod, kota). Yeni okuma/yazma kodunda aynısını yap.

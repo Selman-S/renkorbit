@@ -24,6 +24,8 @@ const PLAY_TO_CODE: Record<PlayMode, string> = { relaxed: 'R', timed: 'T' };
 export function buildShareUrl(state: GameState): string {
   const base = `${window.location.origin}${window.location.pathname}`;
 
+  if (state.dailyDate) return `${base}?daily=1`;
+
   if (state.isJourney && state.journeyStep !== null) {
     return `${base}?step=${state.journeyStep}`;
   }
@@ -86,6 +88,8 @@ export function getShareMessage(state: GameState): string {
 export async function sharePuzzleLink(
   url: string,
   message: string,
+  /** What to copy when there is no share sheet (defaults to the bare URL) */
+  clipboardText: string = url,
 ): Promise<'shared' | 'copied'> {
   if (navigator.share) {
     try {
@@ -96,6 +100,6 @@ export async function sharePuzzleLink(
     }
   }
 
-  await navigator.clipboard.writeText(url);
+  await navigator.clipboard.writeText(clipboardText);
   return 'copied';
 }

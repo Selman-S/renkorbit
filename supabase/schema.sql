@@ -30,3 +30,5 @@ create policy "leaderboard_public_update"
 create policy "leaderboard_public_delete"
   on public.leaderboard for delete
   using (true);
+
+-- Daily puzzle board: see supabase/daily_scores.sql

@@ -7,6 +7,8 @@ Tüm zamanlar skor tablosu (ücretsiz tier yeterli).
 1. [supabase.com](https://supabase.com) → New project
 2. **SQL Editor** → `supabase/schema.sql` içeriğini yapıştır → Run
 
+3. **Günlük bulmaca tablosu:** SQL Editor → `supabase/daily_scores.sql` içeriğini yapıştır → Run. Tablo yoksa oyun çalışır, sadece "Bugün" sekmesi çevrimdışı görünür.
+
 ## 2. Ortam değişkenleri
 
 Project Settings → API:
@@ -38,6 +40,19 @@ Oyuncu adı gir → galibiyet kazan → liderlik tablosunda görün.
 | `username` | Oyuncu adı (2–16 karakter) |
 | `total_score` | Tüm zamanlar toplam puan |
 | `updated_at` | Son güncelleme |
+
+## Günlük tablo (`daily_scores`)
+
+| Sütun | Açıklama |
+|-------|----------|
+| `day` | Oyuncunun yerel tarihi (YYYY-MM-DD) |
+| `player_id` | Cihaz UUID'si — `(day, player_id)` birincil anahtar |
+| `username` | Oyuncu adı |
+| `score`, `moves`, `time_sec` | İlk bitirişin sonucu |
+
+- **Sadece insert:** update/delete politikası yok, günün ilk bitirişi kesindir. Tekrar gönderim `23505` (duplicate) döner, istemci bunu yok sayar.
+- Insert yalnızca `current_date ± 1` günü için kabul edilir (saat dilimi payı; geriye dönük doldurma yok).
+- Sıralama: puan ↓, hamle ↑, süre ↑.
 
 ## Notlar
 

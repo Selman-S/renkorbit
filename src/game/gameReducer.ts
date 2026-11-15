@@ -1,4 +1,5 @@
 import { applyMoveCombo } from './combo';
+import { getDailyGameKey, getDailyLabel, getDailySeed, getDailySettings } from './daily';
 import {
   getJourneyLabel,
   getJourneySeed,
@@ -19,6 +20,7 @@ import type { GameAction, GameState } from './types';
 
 interface BootOptions {
   journeyStep?: number;
+  dailyDate?: string;
 }
 
 function buildInitialState(
@@ -28,29 +30,43 @@ function buildInitialState(
 ): GameState {
   const journeyStep = options.journeyStep;
   const isJourney = journeyStep !== undefined;
+  const dailyDate = !isJourney ? options.dailyDate : undefined;
+  const isDaily = dailyDate !== undefined;
 
-  const playSettings = isJourney ? getJourneySettings(journeyStep) : settings;
+  const playSettings = isJourney
+    ? getJourneySettings(journeyStep)
+    : isDaily
+      ? getDailySettings(dailyDate)
+      : settings;
 
   const puzzleSeed =
-    seed ?? (isJourney ? getJourneySeed(journeyStep) : undefined);
+    seed ??
+    (isJourney ? getJourneySeed(journeyStep) : isDaily ? getDailySeed(dailyDate) : undefined);
 
   const baseConfig = buildConfig(playSettings);
   const puzzle = generatePuzzle(baseConfig, puzzleSeed);
 
   const config = isJourney
     ? { ...baseConfig, label: getJourneyLabel(journeyStep) }
-    : baseConfig;
+    : isDaily
+      ? { ...baseConfig, label: getDailyLabel(dailyDate) }
+      : baseConfig;
 
   const timeLimitSec =
     playSettings.playMode === 'timed' ? getTimeLimitSec(playSettings.colors) : null;
 
-  const gameKey = isJourney ? getJourneyStepId(journeyStep) : getGameKey(playSettings);
+  const gameKey = isJourney
+    ? getJourneyStepId(journeyStep)
+    : isDaily
+      ? getDailyGameKey(dailyDate)
+      : getGameKey(playSettings);
   const undoLimit = isJourney ? getJourneyUndoLimit(journeyStep) : null;
 
   return {
     settings: playSettings,
     isJourney,
     journeyStep: isJourney ? journeyStep : null,
+    dailyDate: isDaily ? dailyDate : null,
     gameKey,
     config,
     columns: puzzle.columns,
@@ -81,6 +97,7 @@ export function createInitialState(settings: GameSettings = DEFAULT_SETTINGS, se
 function bootOptionsFromState(state: GameState): BootOptions {
   return {
     journeyStep: state.journeyStep ?? undefined,
+    dailyDate: state.dailyDate ?? undefined,
   };
 }
 
@@ -95,6 +112,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'SET_GAME':
       return buildInitialState(action.settings, action.seed, {
         journeyStep: action.journeyStep,
+        dailyDate: action.dailyDate,
       });
 
     case 'NEW_GAME':

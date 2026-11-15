@@ -69,10 +69,20 @@
 
 ---
 
+### Günlük bulmaca + seri (Faz 2, Kasım 2026)
+- [x] Tarih seed'li günlük bulmaca (`daily.ts`) — herkes aynı tahta; Pzt-Sal 5, Çar-Per 6, Cum-Cmt 7, Paz 8 renk karışık
+- [x] İlk adım tamamlanınca açılır; menüde günlük kart (geri sayım, seri, "serini koru" uyarısı)
+- [x] Seri: ardışık gün +1, gün kaçarsa 1'e döner; coin `min(seri,10)×5` + 3/7/14/30. gün ödülü (50/150/300/600)
+- [x] Günlük tablo: Supabase `daily_scores` (insert-only RLS), liderlik tablosunda "📅 Bugün" sekmesi
+- [x] Wordle tarzı sonuç paylaşımı + `?daily=1` linki
+- [x] Rozetler: Günün Gezgini, Haftalık Yörünge (7 gün)
+- [ ] **Supabase'de `supabase/daily_scores.sql` çalıştırılmalı** (tablo henüz yok)
+
+---
+
 ## Kalan (bilinen)
 
-### Faz 2–4 (plan: günlük bulmaca + seri, sonsuz mod, coin harcama)
-- [ ] Günlük bulmaca (tarih seed) + seri sayacı + Supabase `daily_scores`
+### Faz 3–4
 - [ ] Sonsuz mod (rastgele seed, kademeli zorluk, koşu puanı)
 - [ ] Başarımlara coin ödülü, tüp skin / arka plan, günlük giriş
 - [ ] Supabase RLS sıkılaştırma (`signInAnonymously` + `auth.uid()`)
