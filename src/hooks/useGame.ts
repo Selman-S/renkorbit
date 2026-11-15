@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useReducer } from 'react';
-import { createInitialState, gameReducer } from '../game/gameReducer';
+import { createInitialState, gameReducer, type BootOptions } from '../game/gameReducer';
 import { canMove } from '../game/gameLogic';
 import { DEFAULT_SETTINGS, type GameSettings } from '../game/levelConfig';
 
@@ -42,9 +42,10 @@ export function useGame(
     dispatch({ type: 'NEW_GAME', seed });
   }, []);
 
+  /** mode picks journey / daily / endless; omit for a free (shared) board */
   const setGame = useCallback(
-    (settings: GameSettings, seed?: number, journeyStep?: number, dailyDate?: string) => {
-      dispatch({ type: 'SET_GAME', settings, seed, journeyStep, dailyDate });
+    (settings: GameSettings, seed?: number, mode: BootOptions = {}) => {
+      dispatch({ type: 'SET_GAME', settings, seed, ...mode });
     },
     [],
   );

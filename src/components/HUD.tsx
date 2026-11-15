@@ -104,7 +104,19 @@ export function HUD({ state, totalScore, onOpenScoreboard }: HUDProps) {
       <div className="hud__meta">
         <span className="hud__meta-item">{state.config.label}</span>
         <span className="hud__meta-divider">·</span>
-        <span className="hud__meta-item">{state.moves} hamle</span>
+        {state.moveLimit !== null ? (
+          <span
+            className={`hud__meta-item${
+              state.moveLimit - state.moves <= Math.max(3, Math.round(state.moveLimit * 0.1))
+                ? ' hud__meta-item--urgent'
+                : ''
+            }`}
+          >
+            {state.moves}/{state.moveLimit} hamle
+          </span>
+        ) : (
+          <span className="hud__meta-item">{state.moves} hamle</span>
+        )}
         {undoLeft !== null && (
           <>
             <span className="hud__meta-divider">·</span>

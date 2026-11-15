@@ -1,5 +1,6 @@
 import { loadCoins } from './coins';
 import { getBestDailyStreak } from './daily';
+import { loadEndlessBest } from './endless';
 import {
   getColorTierStepRange,
   getCompletedCount,
@@ -33,6 +34,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'collector', title: 'Koleksiyoncu', description: '3 mağaza ürünü edin', emoji: '💎' },
   { id: 'daily_first', title: 'Günün Gezgini', description: 'İlk günlük bulmacayı çöz', emoji: '📅' },
   { id: 'streak_7', title: 'Haftalık Yörünge', description: '7 günlük seri yap', emoji: '🔥' },
+  { id: 'endless_10', title: 'Sonsuz Gezgin', description: 'Sonsuz modda 10 aşama geç', emoji: '♾️' },
 ];
 
 export interface WinAchievementContext {
@@ -114,6 +116,8 @@ function shouldUnlock(id: string, win?: WinAchievementContext): boolean {
       return getBestDailyStreak() >= 1;
     case 'streak_7':
       return getBestDailyStreak() >= 7;
+    case 'endless_10':
+      return (loadEndlessBest()?.stagesCleared ?? 0) >= 10;
     default:
       return false;
   }

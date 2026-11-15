@@ -14,6 +14,7 @@ import { usePwaInstall } from '../hooks/usePwaInstall';
 import { getPlayerRank } from '../game/ranks';
 import { getStarThresholds } from '../game/stars';
 import { DailyCard } from './DailyCard';
+import { EndlessCard } from './EndlessCard';
 import { InstallAppModal } from './InstallAppModal';
 import { RankBadge } from './RankBadge';
 import { Profile } from './Profile';
@@ -45,6 +46,7 @@ interface LevelSelectProps {
   onUsernameChange?: (name: string) => void;
   onShareToast?: (message: string) => void;
   onStartDaily?: () => void;
+  onStartEndless?: () => void;
   onOpenDailyBoard?: () => void;
   scoreboardTab?: ScoreboardTab;
   onScoreboardTabChange?: (tab: ScoreboardTab) => void;
@@ -71,6 +73,7 @@ export function LevelSelect({
   onUsernameChange,
   onShareToast,
   onStartDaily,
+  onStartEndless,
   onOpenDailyBoard,
   scoreboardTab = 'all',
   onScoreboardTabChange,
@@ -187,6 +190,7 @@ export function LevelSelect({
           {onStartDaily && onOpenDailyBoard && (
             <DailyCard onPlay={onStartDaily} onOpenBoard={onOpenDailyBoard} />
           )}
+          {onStartEndless && <EndlessCard onPlay={onStartEndless} />}
           <p className="level-select__section-title">Galaksi yolu</p>
 
           <ol className="journey-path">

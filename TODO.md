@@ -78,12 +78,21 @@
 - [x] Rozetler: Günün Gezgini, Haftalık Yörünge (7 gün)
 - [ ] **Supabase'de `supabase/daily_scores.sql` çalıştırılmalı** (tablo henüz yok)
 
+### Sonsuz mod (Faz 3, Kasım 2026)
+- [x] Koşu: aşama 1 = 4×4 sıralı, sonra karışık; her 2 aşamada +1 renk, 12'de tavan
+- [x] Aşama başına **hamle limiti** (playtest optimumu × 2.2 → ×1.5'e daralır); limit dolunca koşu biter
+- [x] Aşama çarpanı ×1.0, ×1.1, ×1.2 …; aşama başına 3 geri alma; "Yeniden" kapalı
+- [x] Koşu sonu: en iyi koşu (`renkorbit_endless_best`), coin `5 × aşama + 50 (rekor)`; toplam puana eklenmez
+- [x] Menüde kart (6 adım sonra açılır), koşu ortasında menü → onay, sonuç paylaşımı
+- [x] Rozet: Sonsuz Gezgin (10 aşama)
+- [ ] Online sonsuz mod tablosu (`endless_runs`) — istenirse
+- [ ] Aşama 15+ zorluk platosu (12×12, limit ×1.5 sabit) — oyuncu verisine göre ayarla
+
 ---
 
 ## Kalan (bilinen)
 
-### Faz 3–4
-- [ ] Sonsuz mod (rastgele seed, kademeli zorluk, koşu puanı)
+### Faz 4
 - [ ] Başarımlara coin ödülü, tüp skin / arka plan, günlük giriş
 - [ ] Supabase RLS sıkılaştırma (`signInAnonymously` + `auth.uid()`)
 

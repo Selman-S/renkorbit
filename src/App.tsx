@@ -10,7 +10,20 @@ import { TimeUpModal } from './components/TimeUpModal';
 import { ComboBurstLayer, type ComboBurstItem } from './components/ComboBurst';
 import { ShareToast } from './components/ShareToast';
 import { RankUpModal } from './components/RankUpModal';
-import { WinModal, type DailyWinInfo } from './components/WinModal';
+import { WinModal, type DailyWinInfo, type EndlessStageInfo } from './components/WinModal';
+import { RunOverModal } from './components/RunOverModal';
+import {
+  finishEndlessRun,
+  getEndlessMoveLimit,
+  getEndlessMultiplier,
+  getEndlessSeed,
+  getEndlessShareText,
+  getEndlessStageSettings,
+  isEndlessUnlocked,
+  newEndlessRun,
+  type EndlessRun,
+  type EndlessRunResult,
+} from './game/endless';
 import { DEFAULT_SETTINGS } from './game/levelConfig';
 import {
   buildDailyShareUrl,
@@ -93,10 +106,21 @@ function App() {
   const [promotedRank, setPromotedRank] = useState<PlayerRank | null>(null);
   const [dailyWinInfo, setDailyWinInfo] = useState<DailyWinInfo | null>(null);
   const [scoreboardTab, setScoreboardTab] = useState<ScoreboardTab>('all');
+  const [endlessRun, setEndlessRun] = useState<EndlessRun | null>(null);
+  const [endlessStageInfo, setEndlessStageInfo] = useState<EndlessStageInfo | null>(null);
+  const [runResult, setRunResult] = useState<EndlessRunResult | null>(null);
+  const [runEndReason, setRunEndReason] = useState<'moves' | 'quit'>('moves');
+  const [confirmQuitRun, setConfirmQuitRun] = useState(false);
 
   // Freeze the clock whenever the board isn't the thing on screen
   const gamePaused =
-    screen !== 'game' || showTutorial || showScoreboard || showShop || showProfile || showStatistics;
+    screen !== 'game' ||
+    showTutorial ||
+    showScoreboard ||
+    showShop ||
+    showProfile ||
+    showStatistics ||
+    confirmQuitRun;
 
   const { state, moveBalls, canDrop, undo, newGame, setGame, clearComboPops, clearComboBreaks } =
     useGame(activeSettings, { paused: gamePaused });
@@ -127,6 +151,44 @@ function App() {
       state.journeyStep,
     );
     const stars = calculateStars(state.moves, state.settings, state.journeyStep);
+    setEarnedStars(stars);
+
+    // Endless: the board feeds the run; records, total score and coins wait for the run's end
+    if (state.endlessStage !== null) {
+      const stage = state.endlessStage;
+      const multiplier = getEndlessMultiplier(stage);
+      const stageScore = Math.round(score * multiplier);
+      const run = endlessRun ?? { ...newEndlessRun(), stage };
+      const nextRun: EndlessRun = {
+        ...run,
+        runScore: run.runScore + stageScore,
+        stagesCleared: run.stagesCleared + 1,
+      };
+      const next = getEndlessStageSettings(stage + 1);
+      setEndlessRun(nextRun);
+      setEndlessStageInfo({
+        stage,
+        stageScore,
+        multiplier,
+        runScore: nextRun.runScore,
+        nextMoveLimit: getEndlessMoveLimit(stage + 1),
+        nextColors: next.colors,
+      });
+      recordWinStats({
+        gameKey: 'endless',
+        label: '♾️ Sonsuz mod',
+        score: stageScore,
+        moves: state.moves,
+        stars,
+        maxCombo: state.maxCombo,
+      });
+      const unlocked = checkAchievements({ stars, maxCombo: state.maxCombo });
+      if (unlocked.length > 0) {
+        setNewAchievements(unlocked);
+        setProfileRefreshKey((n) => n + 1);
+      }
+      return;
+    }
 
     // Read records before writing — replays only pay for the improvement
     const prevBest = loadBestScore(state.gameKey);
@@ -143,7 +205,6 @@ function App() {
     void syncLeaderboardScore(newTotal);
     setEarnedTotalCredit(totalCredit);
 
-    setEarnedStars(stars);
     setIsNewRecord(newRecord);
     setIsNewStars(saveBestStars(state.gameKey, stars));
     const winCoins = isFirstClear
@@ -221,7 +282,9 @@ function App() {
     state.isJourney,
     state.journeyStep,
     state.dailyDate,
+    state.endlessStage,
     state.maxCombo,
+    endlessRun,
   ]);
 
   useEffect(() => {
@@ -245,6 +308,35 @@ function App() {
   useEffect(() => {
     if (state.status === 'lost') play('invalid');
   }, [state.status, play]);
+
+  /** Close the run once: store best, award coins, show the summary */
+  const endRun = useCallback(
+    (run: EndlessRun, reason: 'moves' | 'quit') => {
+      const result = finishEndlessRun(run);
+      if (result.coins > 0) {
+        addCoins(result.coins);
+        setCosmeticsTick((n) => n + 1);
+      }
+      const unlocked = checkAchievements();
+      if (unlocked.length > 0) setProfileRefreshKey((n) => n + 1);
+      setEndlessRun(null);
+      setRunEndReason(reason);
+      return result;
+    },
+    [],
+  );
+
+  // Out of moves in endless — the run is over
+  const runLostHandled = useRef(false);
+  useEffect(() => {
+    if (state.status !== 'lost' || state.endlessStage === null) {
+      runLostHandled.current = false;
+      return;
+    }
+    if (runLostHandled.current || !endlessRun) return;
+    runLostHandled.current = true;
+    setRunResult(endRun(endlessRun, 'moves'));
+  }, [state.status, state.endlessStage, endlessRun, endRun]);
 
   useEffect(() => {
     if (state.comboPops.length === 0) return;
@@ -344,7 +436,49 @@ function App() {
     setComboBursts([]);
     setWinRevealed(false);
     setDailyWinInfo(null);
+    setEndlessStageInfo(null);
+    setRunResult(null);
+    setConfirmQuitRun(false);
   }, []);
+
+  const startEndlessBoard = useCallback(
+    (run: EndlessRun) => {
+      const settings = getEndlessStageSettings(run.stage);
+      unlock();
+      setActiveSettings(settings);
+      setGame(settings, getEndlessSeed(run), { endlessStage: run.stage });
+      setScreen('game');
+      resetRoundUi();
+      setShowTutorial(false);
+    },
+    [setGame, unlock, resetRoundUi],
+  );
+
+  const startEndless = useCallback(() => {
+    if (!isEndlessUnlocked()) return;
+    const run = newEndlessRun();
+    setEndlessRun(run);
+    startEndlessBoard(run);
+  }, [startEndlessBoard]);
+
+  const startNextEndlessStage = useCallback(() => {
+    if (!endlessRun) return;
+    const next = { ...endlessRun, stage: endlessRun.stage + 1 };
+    setEndlessRun(next);
+    startEndlessBoard(next);
+  }, [endlessRun, startEndlessBoard]);
+
+  const shareRunResult = useCallback(async () => {
+    if (!runResult) return;
+    const url = `${window.location.origin}${window.location.pathname}`;
+    const text = getEndlessShareText(runResult);
+    try {
+      const result = await sharePuzzleLink(url, text, `${text}\n${url}`);
+      showShareToast(result === 'shared' ? 'Paylaşıldı!' : 'Sonuç kopyalandı!');
+    } catch {
+      /* user cancelled native share */
+    }
+  }, [runResult, showShareToast]);
 
   const startDaily = useCallback(() => {
     const status = getDailyStatus();
@@ -355,7 +489,7 @@ function App() {
     const settings = getDailySettings(status.today);
     unlock();
     setActiveSettings(settings);
-    setGame(settings, getDailySeed(status.today), undefined, status.today);
+    setGame(settings, getDailySeed(status.today), { dailyDate: status.today });
     setScreen('game');
     resetRoundUi();
     setShowTutorial(false);
@@ -423,7 +557,7 @@ function App() {
       const seed = getJourneySeed(stepIndex);
       unlock();
       setActiveSettings(settings);
-      setGame(settings, seed, stepIndex);
+      setGame(settings, seed, { journeyStep: stepIndex });
       setScreen('game');
       resetRoundUi();
       setShowTutorial(stepIndex === 1 && !isTutorialDone());
@@ -437,6 +571,32 @@ function App() {
   }, []);
 
   const goMenu = useCallback(() => setScreen('menu'), []);
+
+  // Endless: leaving mid-run asks first; between stages it just closes the run
+  const handleMenu = useCallback(() => {
+    if (!endlessRun || state.endlessStage === null) {
+      goMenu();
+      return;
+    }
+    if (state.status === 'playing') {
+      setConfirmQuitRun(true);
+      return;
+    }
+    const result = endRun(endlessRun, 'quit');
+    goMenu();
+    if (result.stagesCleared > 0) {
+      showShareToast(`Koşu bitti: ${result.stagesCleared} aşama · ${result.runScore} puan`);
+    }
+  }, [endlessRun, state.endlessStage, state.status, goMenu, endRun, showShareToast]);
+
+  const confirmQuit = useCallback(() => {
+    setConfirmQuitRun(false);
+    if (!endlessRun) {
+      goMenu();
+      return;
+    }
+    setRunResult(endRun(endlessRun, 'quit'));
+  }, [endlessRun, endRun, goMenu]);
 
   const handleUndo = useCallback(() => {
     undo();
@@ -481,6 +641,7 @@ function App() {
         <LevelSelect
           onStartStep={startJourneyStep}
           onStartDaily={startDaily}
+          onStartEndless={startEndless}
           onOpenLeaderboard={() => openScoreboard('all')}
           onOpenDailyBoard={() => openScoreboard('daily')}
           scoreboardTab={scoreboardTab}
@@ -552,12 +713,27 @@ function App() {
                 (id) => getAchievementById(id)?.title ?? id,
               )}
               onPlayAgain={restartBoard}
-              onMenu={goMenu}
-              onShare={handleSharePuzzle}
+              onMenu={handleMenu}
+              onShare={state.endlessStage === null ? handleSharePuzzle : undefined}
               dailyInfo={dailyWinInfo}
               onOpenDailyBoard={() => openScoreboard('daily')}
+              endlessInfo={endlessStageInfo}
+              onNextStage={startNextEndlessStage}
             />
-            <TimeUpModal state={state} onRetry={restartBoard} onMenu={goMenu} />
+            {state.endlessStage === null ? (
+              <TimeUpModal state={state} onRetry={restartBoard} onMenu={goMenu} />
+            ) : (
+              <RunOverModal
+                confirmQuit={confirmQuitRun ? endlessRun : null}
+                result={runResult}
+                reason={runEndReason}
+                onCancelQuit={() => setConfirmQuitRun(false)}
+                onConfirmQuit={confirmQuit}
+                onNewRun={startEndless}
+                onMenu={goMenu}
+                onShare={shareRunResult}
+              />
+            )}
             <TutorialOverlay open={showTutorial} onComplete={completeTutorial} />
             <ComboBurstLayer bursts={comboBursts} onDone={removeComboBurst} />
           </main>
@@ -566,10 +742,11 @@ function App() {
             undoLeft={
               state.undoLimit !== null ? Math.max(0, state.undoLimit - state.undosUsed) : null
             }
+            canRestart={state.endlessStage === null}
             soundMuted={muted}
             onUndo={handleUndo}
             onRestart={restartBoard}
-            onMenu={goMenu}
+            onMenu={handleMenu}
             onToggleSound={toggleMute}
             onShare={handleSharePuzzle}
           />

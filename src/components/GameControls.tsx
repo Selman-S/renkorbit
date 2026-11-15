@@ -4,6 +4,8 @@ interface GameControlsProps {
   canUndo: boolean;
   /** Remaining undos on a limited step; null = unlimited */
   undoLeft?: number | null;
+  /** Hidden in endless — restarting would dodge the move limit */
+  canRestart?: boolean;
   soundMuted: boolean;
   onUndo: () => void;
   onRestart: () => void;
@@ -15,6 +17,7 @@ interface GameControlsProps {
 export function GameControls({
   canUndo,
   undoLeft = null,
+  canRestart = true,
   soundMuted,
   onUndo,
   onRestart,
@@ -55,9 +58,11 @@ export function GameControls({
       >
         {undoLeft === null ? 'Geri Al' : `Geri Al (${undoLeft})`}
       </button>
-      <button type="button" className="game-controls__btn game-controls__btn--primary" onClick={onRestart}>
-        Yeniden
-      </button>
+      {canRestart && (
+        <button type="button" className="game-controls__btn game-controls__btn--primary" onClick={onRestart}>
+          Yeniden
+        </button>
+      )}
     </footer>
   );
 }

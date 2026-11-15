@@ -64,6 +64,16 @@ Mobil ve tablet odaklı web tabanlı renk sıralama bulmacası.
 - Tekrar oynanabilir ama seri, coin ve tablo değişmez
 - **Sonuç paylaşımı:** `RenkOrbit Günlük #N · ★★☆ · 40 hamle · 🔥 5` + `?daily=1` linki
 
+### 2.2 Sonsuz Mod
+
+- 6 yolculuk adımı tamamlanınca açılır; her koşu rastgele seed ile yeni tahtalar
+- Aşama 1: 4×4 sıralı ısınma; sonra karışık, her 2 aşamada +1 renk (12'de tavan)
+- **Hamle limiti:** playtest optimumu × 2.2'den başlar, her aşama 0.05 daralır (en az × 1.5). HUD'da `34/67 hamle`, son %10'da kırmızı
+- Limit dolunca **koşu biter** ("Hamle bitti!"); aşama başına 3 geri alma, "Yeniden" yok
+- Koşu puanı = Σ tahta puanı × aşama çarpanı (×1.0, ×1.1, ×1.2 …)
+- Koşu sonu: en iyi koşu kaydı, coin `5 × aşama + 50 (yeni rekor)`; **toplam puana/liderliğe eklenmez**
+- Koşu ortasında Menü → "Koşuyu bitir?" onayı; sonuç paylaşılabilir
+
 ---
 
 ## 3. Kontroller & UI
@@ -225,6 +235,7 @@ src/
 | Usta: 3 geri alma | ✅ |
 | Haptik + yeni ses motoru | ✅ |
 | Günün bulmacası + seri + günlük tablo | ✅ |
+| Sonsuz mod (hamle limitli koşu) | ✅ |
 | Sürükle-bırak + animasyon | ✅ |
 | Combo + patlama FX | ✅ |
 | Gizli süre + bitiş bonusu | ✅ |

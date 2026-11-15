@@ -30,6 +30,14 @@
     var(--glass-bg);
 }
 
+.daily-card--endless {
+  border-color: rgba(76, 201, 240, 0.35);
+  background:
+    linear-gradient(135deg, rgba(76, 201, 240, 0.12) 0%, rgba(124, 77, 255, 0.12) 100%),
+    var(--glass-bg);
+  box-shadow: 0 6px 22px rgba(76, 201, 240, 0.12);
+}
+
 .daily-card--locked {
   opacity: 0.55;
   border-color: var(--glass-border);

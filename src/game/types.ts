@@ -40,6 +40,10 @@ export interface GameState {
   journeyStep: number | null;
   /** YYYY-MM-DD when playing the daily puzzle, else null */
   dailyDate: string | null;
+  /** 1-based stage when playing endless mode, else null */
+  endlessStage: number | null;
+  /** Running out of moves loses the board (endless); null = no limit */
+  moveLimit: number | null;
   config: LevelConfig;
   columns: Column[];
   moves: number;
@@ -73,6 +77,7 @@ export type GameAction =
       seed?: number;
       journeyStep?: number;
       dailyDate?: string;
+      endlessStage?: number;
     }
   | { type: 'CLEAR_SHAKE' }
   | { type: 'CLEAR_COMBO_POPS' }

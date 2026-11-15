@@ -7,6 +7,16 @@ import { useCountUp } from '../hooks/useCountUp';
 import { StarRow } from './StarRow';
 import './WinModal.css';
 
+/** Stage clear inside an endless run */
+export interface EndlessStageInfo {
+  stage: number;
+  stageScore: number;
+  multiplier: number;
+  runScore: number;
+  nextMoveLimit: number;
+  nextColors: number;
+}
+
 /** Extra win context when the board was the daily puzzle */
 export interface DailyWinInfo {
   firstClear: boolean;
@@ -36,6 +46,8 @@ interface WinModalProps {
   onStarReveal?: (index: number) => void;
   dailyInfo?: DailyWinInfo | null;
   onOpenDailyBoard?: () => void;
+  endlessInfo?: EndlessStageInfo | null;
+  onNextStage?: () => void;
 }
 
 /** 0 title · 1 stars · 2 score rows · 3 badges + actions */
@@ -67,6 +79,8 @@ export function WinModal({
   onStarReveal,
   dailyInfo = null,
   onOpenDailyBoard,
+  endlessInfo = null,
+  onNextStage,
 }: WinModalProps) {
   return (
     <AnimatePresence>
@@ -96,6 +110,8 @@ export function WinModal({
             onStarReveal={onStarReveal}
             dailyInfo={dailyInfo}
             onOpenDailyBoard={onOpenDailyBoard}
+            endlessInfo={endlessInfo}
+            onNextStage={onNextStage}
           />
         </motion.div>
       )}
@@ -124,6 +140,8 @@ function WinCard({
   onStarReveal,
   dailyInfo = null,
   onOpenDailyBoard,
+  endlessInfo = null,
+  onNextStage,
 }: WinCardProps) {
   const breakdown = calculateScoreBreakdown(
     state.comboScore,
@@ -149,7 +167,8 @@ function WinCard({
 
   const shownTotal = useCountUp(stage >= 2 ? breakdown.finalScore : 0, 700);
 
-  const replayNoGain = earnedTotalCredit === 0 && earnedCoins === 0;
+  const isEndless = endlessInfo !== null;
+  const replayNoGain = earnedTotalCredit === 0 && earnedCoins === 0 && !isEndless;
   const isDaily = dailyInfo !== null;
 
   return (
@@ -164,7 +183,9 @@ function WinCard({
             transition={{ type: 'spring', stiffness: 420, damping: 28 }}
           >
             <div className="win-modal__confetti" aria-hidden />
-            <h2 id="win-modal-title" className="win-modal__title">Tebrikler!</h2>
+            <h2 id="win-modal-title" className="win-modal__title">
+              {isEndless ? `Aşama ${endlessInfo.stage}!` : 'Tebrikler!'}
+            </h2>
             <p className="win-modal__subtitle">{state.config.label} tamamlandı</p>
 
             <div className="win-modal__stars-wrap">
@@ -305,12 +326,45 @@ function WinCard({
                       {...rowMotion}
                       transition={{ duration: 0.25, delay: 0.27 }}
                     >
-                      <span>Toplam puan</span>
+                      <span>{isEndless ? 'Tahta puanı' : 'Toplam puan'}</span>
                       <strong>{shownTotal}</strong>
                     </motion.div>
                   </>
                 )}
-                {stage >= 3 && (
+                {stage >= 3 && isEndless && (
+                  <>
+                    <motion.div
+                      key="stage-score"
+                      className="win-modal__row win-modal__row--credit"
+                      {...rowMotion}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <span>Aşama çarpanı ×{endlessInfo.multiplier.toFixed(1)}</span>
+                      <strong>+{endlessInfo.stageScore}</strong>
+                    </motion.div>
+                    <motion.div
+                      key="run-score"
+                      className="win-modal__row win-modal__row--total"
+                      {...rowMotion}
+                      transition={{ duration: 0.25, delay: 0.09 }}
+                    >
+                      <span>Koşu puanı</span>
+                      <strong>{endlessInfo.runScore}</strong>
+                    </motion.div>
+                    <motion.div
+                      key="next-stage"
+                      className="win-modal__row win-modal__row--hint"
+                      {...rowMotion}
+                      transition={{ duration: 0.25, delay: 0.18 }}
+                    >
+                      <span>
+                        Sıradaki: {endlessInfo.nextColors}×{endlessInfo.nextColors} · en fazla{' '}
+                        {endlessInfo.nextMoveLimit} hamle
+                      </span>
+                    </motion.div>
+                  </>
+                )}
+                {stage >= 3 && !isEndless && (
                   <>
                     {earnedTotalCredit > 0 && (
                       <motion.div
@@ -407,7 +461,11 @@ function WinCard({
               <button type="button" className="win-modal__btn" onClick={onMenu}>
                 Menü
               </button>
-              {isDaily && onOpenDailyBoard ? (
+              {isEndless && onNextStage ? (
+                <button type="button" className="win-modal__btn win-modal__btn--primary" onClick={onNextStage}>
+                  Sonraki aşama
+                </button>
+              ) : isDaily && onOpenDailyBoard ? (
                 <button type="button" className="win-modal__btn win-modal__btn--primary" onClick={onOpenDailyBoard}>
                   Sıralama
                 </button>

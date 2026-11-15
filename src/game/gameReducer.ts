@@ -1,6 +1,12 @@
 import { applyMoveCombo } from './combo';
 import { getDailyGameKey, getDailyLabel, getDailySeed, getDailySettings } from './daily';
 import {
+  ENDLESS_UNDO_LIMIT,
+  getEndlessLabel,
+  getEndlessMoveLimit,
+  getEndlessStageSettings,
+} from './endless';
+import {
   getJourneyLabel,
   getJourneySeed,
   getJourneySettings,
@@ -18,9 +24,10 @@ import {
 import { generatePuzzle } from './puzzleGenerator';
 import type { GameAction, GameState } from './types';
 
-interface BootOptions {
+export interface BootOptions {
   journeyStep?: number;
   dailyDate?: string;
+  endlessStage?: number;
 }
 
 function buildInitialState(
@@ -32,12 +39,16 @@ function buildInitialState(
   const isJourney = journeyStep !== undefined;
   const dailyDate = !isJourney ? options.dailyDate : undefined;
   const isDaily = dailyDate !== undefined;
+  const endlessStage = !isJourney && !isDaily ? options.endlessStage : undefined;
+  const isEndless = endlessStage !== undefined;
 
   const playSettings = isJourney
     ? getJourneySettings(journeyStep)
     : isDaily
       ? getDailySettings(dailyDate)
-      : settings;
+      : isEndless
+        ? getEndlessStageSettings(endlessStage)
+        : settings;
 
   const puzzleSeed =
     seed ??
@@ -50,7 +61,9 @@ function buildInitialState(
     ? { ...baseConfig, label: getJourneyLabel(journeyStep) }
     : isDaily
       ? { ...baseConfig, label: getDailyLabel(dailyDate) }
-      : baseConfig;
+      : isEndless
+        ? { ...baseConfig, label: getEndlessLabel(endlessStage) }
+        : baseConfig;
 
   const timeLimitSec =
     playSettings.playMode === 'timed' ? getTimeLimitSec(playSettings.colors) : null;
@@ -59,14 +72,22 @@ function buildInitialState(
     ? getJourneyStepId(journeyStep)
     : isDaily
       ? getDailyGameKey(dailyDate)
-      : getGameKey(playSettings);
-  const undoLimit = isJourney ? getJourneyUndoLimit(journeyStep) : null;
+      : isEndless
+        ? 'endless'
+        : getGameKey(playSettings);
+  const undoLimit = isJourney
+    ? getJourneyUndoLimit(journeyStep)
+    : isEndless
+      ? ENDLESS_UNDO_LIMIT
+      : null;
 
   return {
     settings: playSettings,
     isJourney,
     journeyStep: isJourney ? journeyStep : null,
     dailyDate: isDaily ? dailyDate : null,
+    endlessStage: isEndless ? endlessStage : null,
+    moveLimit: isEndless ? getEndlessMoveLimit(endlessStage) : null,
     gameKey,
     config,
     columns: puzzle.columns,
@@ -98,7 +119,20 @@ function bootOptionsFromState(state: GameState): BootOptions {
   return {
     journeyStep: state.journeyStep ?? undefined,
     dailyDate: state.dailyDate ?? undefined,
+    endlessStage: state.endlessStage ?? undefined,
   };
+}
+
+/** A winning last move still wins; otherwise hitting the limit loses */
+function nextStatus(
+  columns: GameState['columns'],
+  capacity: number,
+  moves: number,
+  moveLimit: number | null,
+): GameState['status'] {
+  if (checkWin(columns, capacity)) return 'won';
+  if (moveLimit !== null && moves >= moveLimit) return 'lost';
+  return 'playing';
 }
 
 export function canUndo(state: GameState): boolean {
@@ -113,6 +147,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       return buildInitialState(action.settings, action.seed, {
         journeyStep: action.journeyStep,
         dailyDate: action.dailyDate,
+        endlessStage: action.endlessStage,
       });
 
     case 'NEW_GAME':
@@ -187,7 +222,7 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
         comboBreaks: comboUpdate.comboBreaks,
         tubeCompletions: comboUpdate.completedTubes,
         history: [...state.history, snapshot],
-        status: checkWin(columns, state.config.capacity) ? 'won' : 'playing',
+        status: nextStatus(columns, state.config.capacity, state.moves + 1, state.moveLimit),
         invalidShake: null,
       };
     }
