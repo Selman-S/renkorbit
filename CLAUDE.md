@@ -40,7 +40,7 @@ React 19, TypeScript 6, Vite 8, framer-motion. Online liderlik tablosu için Sup
   - `storage.ts`: kullanıcı adı, player id, tutorial ve ses ayarı
 - `src/hooks/`: `useGame`, `useBoardLayout`, `useSound`, `usePwaInstall`
 - `src/lib/supabase.ts`: Supabase istemcisi. Env yoksa `null` döner.
-- `supabase/`: `schema.sql`, `daily_scores.sql`, `secure-rls.sql`, `reset-leaderboard.sql`
+- `supabase/`: `schema.sql`, `daily_scores.sql`, `weekly_scores.sql`, `secure-rls.sql`, `reset-leaderboard.sql`
 - `docs/`: FEATURES, ROADMAP, SUPABASE, MOBILE_TEST, PWA_INSTALL. `TODO.md` ve `todos/` görev takibi.
 
 ## Oyun kuralları (değiştirirken dikkat)
@@ -62,11 +62,12 @@ React 19, TypeScript 6, Vite 8, framer-motion. Online liderlik tablosu için Sup
 - **Ödüller:** `checkAchievements()` yeni açılan rozetlerin coin'ini kendisi öder; `checkRankPromotion()` / `migratePlayerRank()` atlanan rütbelerin ödülünü de öder. Çağıran tarafta tekrar `addCoins` yapma.
 - **Mağaza** (`shop.ts`): tipler `ballSkin | tubeSkin | theme`, ürün id'si `skin-* / tube-* / theme-*`. Tüp skinleri `.game-board--tube-<id>` sınıfıyla uygulanır ve yalnızca renk/glow değiştirir — boyut değiştirmek `useBoardLayout`'u bozar. Temalar `App.css`'te `.app.theme-<id>`. Yeni arka plan görseli eklerken lisansını doğrula (önceki `cosmic1.jpg` filigranlı stok görsel olduğu için silindi).
 - Oyun içi `contained` modallar (`ModalCard`) `z-index: 60` — kazanma/süre modallarının (50) ve tutorial'ın (55) üstünde olmalı.
+- **Haftalık lig** (`weekly.ts`, `weeklyApi.ts`, `WeeklyBoard.tsx`): hafta yerel pazartesi 00:00'da başlar, anahtar o pazartesi. Haftalık puan = toplam puana yazılan kazanç (`creditWeekly(totalCredit)`, kazanma efekti) + sonsuz koşu puanı (`endRun`). Yeni haftadaki ilk açılışta geçen haftanın sırası Supabase'den sayılır ve ödül (500/300/200/100/50/25) bir kez ödenir; `markWeeklyClaimed` await'ten **önce** çağrılır. Supabase `weekly_scores` (sahip-yazar, ≤5M).
 - Günlük tablo `dailyApi.ts` → Supabase `daily_scores` (insert-only). Tablo yoksa `fetchDailyBoard` `available: false` döner; HEAD/count sorguları eksik tabloda hata vermeden `null` döndüğü için varlık kontrolünü normal `select` ile yap.
 
 ## Kalıcılık
 
-- İlerleme `localStorage` üzerinde tutulur. Anahtarlar `renkorbit_` ile başlar: `journey`, `total_score`, `best_*`, `stars_*`, `coins`, `inventory`, `achievements`, `stats`, `score_history`, `rank_tier`, `username`, `player_id`, `tutorial_done`, `sound_muted`, `scoring_version`, `daily` (`{lastDate, streak, bestStreak, results}`, son 60 gün), `endless_best`, `rewards_backfill_v1`.
+- İlerleme `localStorage` üzerinde tutulur. Anahtarlar `renkorbit_` ile başlar: `journey`, `total_score`, `best_*`, `stars_*`, `coins`, `inventory`, `achievements`, `stats`, `score_history`, `rank_tier`, `username`, `player_id`, `tutorial_done`, `sound_muted`, `scoring_version`, `daily` (`{lastDate, streak, bestStreak, results}`, son 60 gün), `endless_best`, `rewards_backfill_v1`, `weekly` (`{week, score, prev, claimed}`).
 - `src/game/migrations.ts` tek seferlik migrasyonları tutar (`runStorageMigrations`, App'te lazy `useState` ile ilk render'dan önce çalışır). Puan formülünü değiştirirsen `SCORING_VERSION`'ı artır.
 - Ses `useSound.play(event, level)` ile; `level` olaya göre yığın yüksekliği / combo seviyesi / yıldız indeksi. Haptik `src/lib/haptics.ts`, mute'tan bağımsız.
 - `localStorage` erişimi her zaman `try/catch` içindedir (gizli mod, kota). Yeni okuma/yazma kodunda aynısını yap.

@@ -8,7 +8,8 @@ Tüm zamanlar skor tablosu (ücretsiz tier yeterli).
 2. **SQL Editor** → `supabase/schema.sql` içeriğini yapıştır → Run
 
 3. **Günlük bulmaca tablosu:** SQL Editor → `supabase/daily_scores.sql` içeriğini yapıştır → Run. Tablo yoksa oyun çalışır, sadece "Bugün" sekmesi çevrimdışı görünür.
-4. **Yazma güvenliği (sırayla):**
+4. **Haftalık lig tablosu:** SQL Editor → `supabase/weekly_scores.sql` → Run (anonim giriş açık olmalı). Tablo yoksa "Hafta" sekmesi çevrimdışı görünür, puan cihazda birikir ve hafta sonunda katılım ödülü yine verilir.
+5. **Yazma güvenliği (sırayla):**
    1. Authentication → Sign In / Providers → **Anonymous sign-ins** aç.
    2. `signInAnonymously` kullanan istemciyi yayınla.
    3. SQL Editor → `supabase/secure-rls.sql` → Run.
@@ -59,6 +60,18 @@ Oyuncu adı gir → galibiyet kazan → liderlik tablosunda görün.
 - **Sadece insert:** update/delete politikası yok, günün ilk bitirişi kesindir. Tekrar gönderim `23505` (duplicate) döner, istemci bunu yok sayar.
 - Insert yalnızca `current_date ± 1` günü için kabul edilir (saat dilimi payı; geriye dönük doldurma yok).
 - Sıralama: puan ↓, hamle ↑, süre ↑.
+
+## Haftalık tablo (`weekly_scores`)
+
+| Sütun | Açıklama |
+|-------|----------|
+| `week_start` | Haftanın pazartesisi (oyuncunun yerel takvimi) |
+| `player_id` | `auth.uid()` — `(week_start, player_id)` birincil anahtar |
+| `username` | Oyuncu adı |
+| `score` | O hafta kazanılan puan (≤ 5.000.000) |
+
+- Sadece kendi satırını insert/update edebilirsin; `week_start` son 8 gün içinde olmalı (eski haftalar kapanır). Silme yok.
+- Hafta sonucu istemcide ödenir: yeni haftadaki ilk açılışta `score`'u senden yüksek olanlar sayılır → sıra → coin.
 
 ## Notlar
 

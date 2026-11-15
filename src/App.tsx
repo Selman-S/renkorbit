@@ -64,6 +64,14 @@ import {
   type SharedPuzzlePayload,
 } from './game/sharePuzzle';
 import { registerLeaderboardPlayer, syncLeaderboardScore } from './game/leaderboardApi';
+import {
+  addWeeklyPoints,
+  getPendingWeeklyClaim,
+  getWeeklyReward,
+  getWeeklyScore,
+  markWeeklyClaimed,
+} from './game/weekly';
+import { fetchWeeklyRank, submitWeeklyScore } from './game/weeklyApi';
 import { hasUsername, isTutorialDone, markTutorialDone } from './game/storage';
 import {
   calculateStars,
@@ -79,6 +87,13 @@ import './styles/global.css';
 import './App.css';
 
 type Screen = 'menu' | 'game';
+
+/** Weekly league points: total-score credit and endless run scores */
+function creditWeekly(points: number) {
+  if (points <= 0) return;
+  const { week, score } = addWeeklyPoints(points);
+  void submitWeeklyScore(week, score);
+}
 
 function App() {
   // Runs once, before any render-time storage reads below
@@ -203,6 +218,7 @@ function App() {
     const totalCredit = isFirstClear ? score : Math.max(0, score - prevBest.score);
     const newTotal = addToTotalScore(totalCredit);
     void syncLeaderboardScore(newTotal);
+    creditWeekly(totalCredit);
     setEarnedTotalCredit(totalCredit);
 
     setIsNewRecord(newRecord);
@@ -313,6 +329,7 @@ function App() {
   const endRun = useCallback(
     (run: EndlessRun, reason: 'moves' | 'quit') => {
       const result = finishEndlessRun(run);
+      creditWeekly(result.runScore);
       if (result.coins > 0) {
         addCoins(result.coins);
         setCosmeticsTick((n) => n + 1);
@@ -536,6 +553,33 @@ function App() {
     );
     return () => timers.forEach((t) => window.clearTimeout(t));
   }, [usernameReady, migration.scoringReset, migration.backfillCoins, showShareToast]);
+
+  // Weekly league: re-sync this week's row, pay out last week's rank once
+  useEffect(() => {
+    if (!usernameReady) return;
+    const weekly = getWeeklyScore();
+    if (weekly.score > 0) void submitWeeklyScore(weekly.week, weekly.score);
+
+    const pending = getPendingWeeklyClaim();
+    if (!pending) return;
+    // Mark before the await so a re-run of this effect can't pay twice
+    markWeeklyClaimed(pending.week);
+    let timer = 0;
+    void submitWeeklyScore(pending.week, pending.score)
+      .then(() => fetchWeeklyRank(pending.week, pending.score))
+      .catch(() => null)
+      .then((rank) => {
+        const coins = getWeeklyReward(rank);
+        addCoins(coins);
+        setCosmeticsTick((n) => n + 1);
+        const place = rank !== null ? `${rank}. oldun` : 'ligde yer aldın';
+        timer = window.setTimeout(
+          () => showShareToast(`🏆 Geçen hafta ${place} · +${coins} 🪙`),
+          3200,
+        );
+      });
+    return () => window.clearTimeout(timer);
+  }, [usernameReady, showShareToast]);
 
   useEffect(() => {
     if (!usernameReady || shareLaunched.current) return;

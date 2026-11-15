@@ -106,7 +106,9 @@
 ### Sonrası
 - [x] RLS sıkılaştırma — istemci: anonim oturum + `player_id = auth.uid()`, açılışta satırı yeniden kaydeder; SQL: `supabase/secure-rls.sql` (sahip yazar, silme yok, puan tavanı)
 - [ ] Supabase'de **Anonymous sign-ins** aç → istemciyi yayınla → `secure-rls.sql` çalıştır (kullanıcı adımı; 16 Kasım'da anonim giriş kapalı)
-- [ ] Haftalık lig sezonları (ayrı karar)
+- [x] Haftalık lig: pazartesi sıfırlanan tablo ("🏆 Hafta" sekmesi), puan = toplam puan kazancı + sonsuz koşu; hafta bitince sıra ödülü 500/300/200/100 (ilk 10)/50 (ilk 25)/25 katılım
+- [ ] Supabase'de `supabase/weekly_scores.sql` çalıştır (kullanıcı adımı)
+- [ ] Haftalık lig: menüde kısa durum kartı (sıra + bitişe kalan) — istenirse
 
 ### Polish
 - [ ] Cross-tube top animasyonu (ball ID)

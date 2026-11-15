@@ -8,9 +8,10 @@ import { loadTotalScore } from '../game/scoring';
 import { loadUsername } from '../game/storage';
 import { DailyBoard } from './DailyBoard';
 import { ModalCard } from './ModalCard';
+import { WeeklyBoard } from './WeeklyBoard';
 import './Scoreboard.css';
 
-export type ScoreboardTab = 'daily' | 'all';
+export type ScoreboardTab = 'daily' | 'week' | 'all';
 
 interface ScoreboardProps {
   open: boolean;
@@ -114,7 +115,8 @@ export function Scoreboard({
         {(
           [
             ['daily', '📅 Bugün'],
-            ['all', '👑 Tüm zamanlar'],
+            ['week', '🏆 Hafta'],
+            ['all', '👑 Tümü'],
           ] as const
         ).map(([id, label]) => (
           <button
@@ -132,6 +134,8 @@ export function Scoreboard({
 
       {tab === 'daily' ? (
         <DailyBoard key={refreshKey} />
+      ) : tab === 'week' ? (
+        <WeeklyBoard key={refreshKey} />
       ) : (
         <>
       {offline && (
