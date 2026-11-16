@@ -144,3 +144,22 @@
 .daily-card__btn:active {
   transform: scale(0.97);
 }
+
+.daily-card--weekly {
+  border-color: rgba(255, 196, 77, 0.35);
+  background:
+    linear-gradient(135deg, rgba(255, 196, 77, 0.12) 0%, rgba(124, 77, 255, 0.12) 100%),
+    var(--glass-bg);
+  box-shadow: 0 6px 22px rgba(255, 196, 77, 0.12);
+}
+
+.daily-card__rank {
+  font-size: 0.72rem;
+  font-weight: 900;
+  padding: 1px 7px;
+  border-radius: 999px;
+  color: #ffe9a8;
+  background: rgba(255, 215, 0, 0.16);
+  border: 1px solid rgba(255, 215, 0, 0.4);
+  font-variant-numeric: tabular-nums;
+}

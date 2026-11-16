@@ -698,6 +698,7 @@ function App() {
           onStartEndless={startEndless}
           onOpenLeaderboard={() => openScoreboard('all')}
           onOpenDailyBoard={() => openScoreboard('daily')}
+          onOpenWeeklyBoard={() => openScoreboard('week')}
           scoreboardTab={scoreboardTab}
           onScoreboardTabChange={setScoreboardTab}
           showScoreboard={showScoreboard}

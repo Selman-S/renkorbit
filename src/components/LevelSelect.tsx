@@ -15,6 +15,7 @@ import { getPlayerRank } from '../game/ranks';
 import { getStarThresholds } from '../game/stars';
 import { DailyCard } from './DailyCard';
 import { EndlessCard } from './EndlessCard';
+import { WeeklyCard } from './WeeklyCard';
 import { InstallAppModal } from './InstallAppModal';
 import { RankBadge } from './RankBadge';
 import { Profile } from './Profile';
@@ -48,6 +49,7 @@ interface LevelSelectProps {
   onStartDaily?: () => void;
   onStartEndless?: () => void;
   onOpenDailyBoard?: () => void;
+  onOpenWeeklyBoard?: () => void;
   scoreboardTab?: ScoreboardTab;
   onScoreboardTabChange?: (tab: ScoreboardTab) => void;
 }
@@ -75,6 +77,7 @@ export function LevelSelect({
   onStartDaily,
   onStartEndless,
   onOpenDailyBoard,
+  onOpenWeeklyBoard,
   scoreboardTab = 'all',
   onScoreboardTabChange,
 }: LevelSelectProps) {
@@ -190,6 +193,7 @@ export function LevelSelect({
           {onStartDaily && onOpenDailyBoard && (
             <DailyCard onPlay={onStartDaily} onOpenBoard={onOpenDailyBoard} />
           )}
+          {onOpenWeeklyBoard && <WeeklyCard key={scoreRefreshKey} onOpenBoard={onOpenWeeklyBoard} />}
           {onStartEndless && <EndlessCard onPlay={onStartEndless} />}
           <p className="level-select__section-title">Galaksi yolu</p>
 

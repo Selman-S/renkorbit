@@ -108,7 +108,7 @@
 - [ ] Supabase'de **Anonymous sign-ins** aç → istemciyi yayınla → `secure-rls.sql` çalıştır (kullanıcı adımı; 16 Kasım'da anonim giriş kapalı)
 - [x] Haftalık lig: pazartesi sıfırlanan tablo ("🏆 Hafta" sekmesi), puan = toplam puan kazancı + sonsuz koşu; hafta bitince sıra ödülü 500/300/200/100 (ilk 10)/50 (ilk 25)/25 katılım
 - [x] Supabase'de `weekly_scores` kuruldu ve RLS test edildi (16 Kasım 2026)
-- [ ] Haftalık lig: menüde kısa durum kartı (sıra + bitişe kalan) — istenirse
+- [x] Haftalık lig: menüde durum kartı (sıra, puan, şu anki ödül, bitişe kalan, "Sıralama")
 
 ### Polish
 - [ ] Cross-tube top animasyonu (ball ID)
