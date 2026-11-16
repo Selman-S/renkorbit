@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { createPortal } from 'react-dom';
 import { PLAYER_RANKS, type PlayerRank } from '../game/ranks';
 import './RankUpModal.css';
 
@@ -10,7 +11,9 @@ interface RankUpModalProps {
 export function RankUpModal({ rank, onClose }: RankUpModalProps) {
   const open = rank !== null;
 
-  return (
+  // Portal: .app > * forces position: relative, which would drop the
+  // fixed backdrop into the page flow below the controls
+  return createPortal(
     <AnimatePresence>
       {open && rank && (
         <motion.div
@@ -58,6 +61,7 @@ export function RankUpModal({ rank, onClose }: RankUpModalProps) {
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body,
   );
 }

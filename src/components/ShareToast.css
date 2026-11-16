@@ -2,7 +2,7 @@
   position: fixed;
   left: 50%;
   bottom: max(20px, env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  /* centering x(-50%) is set by framer-motion, which owns transform */
   z-index: 500;
   padding: 10px 18px;
   border-radius: 14px;
